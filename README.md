@@ -1,5 +1,5 @@
 
-###My entry for the fabulous [Advent of Code](https://adventofcode.com/2019/about)
+### My entry for the fabulous [Advent of Code](https://adventofcode.com/2019/about) ###
 
 - I tried to spend as little time as possible on the solutions so don't expect the best code in the world.
 - Global leaderboard is not a goal as I am just too lazy to wake up that early every morning. Private ones are another matter ;) 
