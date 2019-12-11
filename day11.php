@@ -62,8 +62,7 @@ class Robot {
     public function paintBoard() : array {
         while(true) {
             $currentPanelColor = $this->board[$this->y][$this->x] ?? BLACK;
-            $this->computer->addInput($currentPanelColor);
-            $instructions = $this->computer->runCode();
+            $instructions = $this->computer->addInput($currentPanelColor)->getOutput();
             if (empty($instructions)) {
                 break;
             }

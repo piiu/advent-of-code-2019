@@ -11,8 +11,7 @@ foreach ($phaseModifierCombinations as $phaseModifiers) {
     $signal = 0;
     $amplifiers = getFiveAmplifiers($code, $phaseModifiers);
     foreach ($amplifiers as $amplifier) {
-        $amplifier->addInput($signal);
-        $signal = $amplifier->runCode(true);
+        $signal = $amplifier->addInput($signal)->getFirstOutput();
     }
     $maxOutput = !$maxOutput || $maxOutput < $signal ? $signal : $maxOutput;
 }
@@ -28,8 +27,7 @@ foreach ($phaseModifierCombinations as $phaseModifiers) {
     while (true) {
         $ampIndex = $iteration % 5;
         $amplifier = $amplifiers[$ampIndex];
-        $amplifier->addInput($signal);
-        $signal = $amplifier->runCode(true);
+        $signal = $amplifier->addInput($signal)->getFirstOutput();
         if ($ampIndex === 4 && $amplifier->isFinished()) {
             break;
         }
