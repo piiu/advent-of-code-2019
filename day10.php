@@ -1,9 +1,10 @@
 <?php
 
-$input = trim(file_get_contents(__DIR__ . '/input/day10'));
+$input = file_get_contents(__DIR__ . '/input/day10');
+$map = explode(PHP_EOL, $input);
 
 $asteroids = [];
-foreach (explode("\n", $input) as $y => $row) {
+foreach ($map as $y => $row) {
     foreach(str_split($row) as $x => $element) {
         if ($element == '#') {
             $asteroids[] = [

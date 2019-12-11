@@ -1,10 +1,11 @@
 <?php
 require_once('IntcodeComputer.php');
 
-$code = trim(file_get_contents(__DIR__ . '\input\day05'));
-$code = explode(',', $code);
+$input = file_get_contents(__DIR__ . '\input\day05');
+$code = explode(',', $input);
 
 $computer = new IntcodeComputer($code);
+
 $output = $computer->addInput(1)->getOutput();
 echo 'Part 1: ' . array_pop($output) . PHP_EOL;
 

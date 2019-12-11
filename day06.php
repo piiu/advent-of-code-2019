@@ -1,6 +1,7 @@
 <?php
-$input = trim(file_get_contents(__DIR__ . '\input\day06'));
-$rows = explode("\n", $input);
+
+$input = file_get_contents(__DIR__ . '\input\day06');
+$rows = explode(PHP_EOL, $input);
 
 $solarSystem = new SolarSystem($rows);
 
@@ -13,9 +14,9 @@ echo 'Part 1: ' . $orbits . PHP_EOL;
 
 $myLocation = $solarSystem->getPlanetByName('YOU')->parent;
 $santaLocation = $solarSystem->getPlanetByName('SAN')->parent;
+
 $commonPath = array_intersect($myLocation->getPathToCom(), $santaLocation->getPathToCom());
-$meetingPoint = $solarSystem->getPlanetByName(array_shift($commonPath));
-$totalDistance = $myLocation->distance + $santaLocation->distance - 2 * $meetingPoint->distance;
+$totalDistance = $myLocation->distance + $santaLocation->distance - 2 * (count($commonPath) - 1);
 
 echo 'Part 2: ' . $totalDistance . PHP_EOL;
 
@@ -54,7 +55,7 @@ class Planet {
     public $parent;
     public $distance;
 
-    public function __construct($name, $parent, $distance = null) {
+    public function __construct(string $name, Planet $parent = null, int $distance = null) {
         $this->name = $name;
         $this->parent = $parent;
         $this->distance = $distance ?? $parent->distance +1;

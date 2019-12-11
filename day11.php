@@ -5,8 +5,8 @@ const DIRECTIONS = ['<', '^', '>', 'v'];
 const WHITE = 1;
 const BLACK = 0;
 
-$code = trim(file_get_contents(__DIR__ . '\input\day11'));
-$code = explode(',', $code);
+$input = file_get_contents(__DIR__ . '\input\day11');
+$code = explode(',', $input);
 
 $board = [];
 $robot = new Robot($code, $board);
@@ -18,7 +18,19 @@ $robot = new Robot($code, $board);
 $board = $robot->paintBoard();
 echo 'Part 2: '. PHP_EOL;
 
-list ($minX, $maxX) = getMinMaxIndex($board);
+$minX = null;
+$maxX = null;
+foreach ($board as $row) {
+    foreach (array_keys($row) as $index) {
+        if (!$minX || $minX > $index) {
+            $minX = $index;
+        }
+        if (!$maxX || $maxX < $index) {
+            $maxX = $index;
+        }
+    }
+}
+
 $minY = min(array_keys($board));
 $maxY = max(array_keys($board));
 
@@ -26,24 +38,9 @@ $maxY = max(array_keys($board));
 for ($y = $maxY; $y >= $minY; $y--) {
     for ($x = $minX; $x <= $maxX; $x++) {
         $color = $board[$y][$x] ?? BLACK;
-        echo $color == WHITE ? '█' : ' ';
+        echo $color == WHITE ? 'X' : ' ';
     }
     echo PHP_EOL;
-}
-function getMinMaxIndex($board) {
-    $minX = null;
-    $maxX = null;
-    foreach ($board as $row) {
-        foreach (array_keys($row) as $index) {
-            if (!$minX || $minX > $index) {
-                $minX = $index;
-            }
-            if (!$maxX || $maxX < $index) {
-                $maxX = $index;
-            }
-        }
-    }
-    return [$minX, $maxX];
 }
 
 class Robot {
@@ -54,7 +51,7 @@ class Robot {
     private $currentDirection = 1;
     public $paintedPanels = 0;
 
-    public function __construct($code, $board) {
+    public function __construct(array $code, array $board) {
         $this->computer = new IntcodeComputer($code);
         $this->board = $board;
     }
@@ -73,7 +70,7 @@ class Robot {
         return $this->board;
     }
 
-    private function getDirection($directionModifier) {
+    private function getDirection(int $directionModifier) : string {
         $direction = $this->currentDirection + ($directionModifier == 1 ? 1 : -1);
         $direction = $direction < 0 ? $direction + 4 : $direction % 4;
         $this->currentDirection = $direction;
@@ -81,14 +78,14 @@ class Robot {
         return DIRECTIONS[$direction];
     }
 
-    private function paint($color) {
+    private function paint(int $color) {
         if (!isset($this->board[$this->y][$this->x])) {
             $this->paintedPanels++;
         }
         $this->board[$this->y][$this->x] = $color;
     }
 
-    private function step($direction) {
+    private function step(string $direction) {
         switch ($direction) {
             case '<':
                 $this->x -= 1;

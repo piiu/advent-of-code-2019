@@ -1,8 +1,8 @@
 <?php
 require_once('IntcodeComputer.php');
 
-$code = trim(file_get_contents(__DIR__ . '\input\day07'));
-$code = explode(',', $code);
+$input = file_get_contents(__DIR__ . '\input\day07');
+$code = explode(',', $input);
 
 $maxOutput = null;
 $phaseModifierCombinations = permutations([0,1,2,3,4]);
@@ -15,6 +15,7 @@ foreach ($phaseModifierCombinations as $phaseModifiers) {
     }
     $maxOutput = !$maxOutput || $maxOutput < $signal ? $signal : $maxOutput;
 }
+
 echo 'Part 1: ' . $maxOutput . PHP_EOL;
 
 $maxOutput = null;
@@ -38,7 +39,7 @@ foreach ($phaseModifierCombinations as $phaseModifiers) {
 
 echo 'Part 2: ' . $maxOutput . PHP_EOL;
 
-function getFiveAmplifiers($code, $phaseModifiers) {
+function getFiveAmplifiers(array $code, array $phaseModifiers) : array {
     $amplifiers = [];
     for ($i=0; $i<5; $i++) {
         $amplifier = new IntcodeComputer($code);
@@ -48,7 +49,7 @@ function getFiveAmplifiers($code, $phaseModifiers) {
     return $amplifiers;
 }
 
-function permutations($array, $allCombinations = []) {
+function permutations(array $array, array $allCombinations = []) : array {
     for ($i=0; count($allCombinations) < factorial(count($array)); $i++) {
         shuffle($array);
         $allCombinations[implode($array)] = $array;
@@ -56,6 +57,6 @@ function permutations($array, $allCombinations = []) {
     return array_values($allCombinations);
 }
 
-function factorial($number){
+function factorial(int $number) : int {
     return $number <= 1 ? 1 : $number * factorial($number - 1);
 }

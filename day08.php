@@ -1,5 +1,6 @@
 <?php
-$input = trim(file_get_contents(__DIR__ . '\input\day08'));
+
+$input = file_get_contents(__DIR__ . '\input\day08');
 $input = str_split($input);
 
 $width = 25;
@@ -35,17 +36,18 @@ echo 'Part 1: ' . $resultOnMin . PHP_EOL;
 echo 'Part 2: ' . PHP_EOL;
 for ($row = 0; $row < $height; $row++) {
     for ($column = 0; $column < $width; $column++) {
+
         foreach ($layers as $layer) {
             if ($layer[$row][$column] != 2) {
-                echo $layer[$row][$column] == 1 ? '█' : ' ';
+                echo $layer[$row][$column] == 1 ? 'X' : ' ';
                 break;
             }
         }
     }
-    echo "\n";
+    echo PHP_EOL;
 }
 
-function getCountForLayer($layer, $target) {
+function getCountForLayer(array $layer, int $target) : int {
     $count = 0;
     foreach ($layer as $row) {
         foreach ($row as $digit) {

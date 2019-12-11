@@ -1,14 +1,14 @@
 <?php
-$min = 372304;
-$max = 847060;
+
+$input = file_get_contents(__DIR__ . '\input\day04');
+list($min, $max) = explode('-', $input);
 
 $count1 = $count2 = 0;
 for ($i=$min; $i<=$max; $i++) {
     $pw = str_split($i);
 
     $orderExists = true;
-    $pairExists = false;
-    $singlePairExists = false;
+    $pairExists = $singlePairExists = false;
 
     foreach ($pw as $index => $digit) {
         $previousDigit = $pw[$index-1] ?? null;

@@ -1,12 +1,12 @@
 <?php
 
-$input = trim(file_get_contents(__DIR__ . '\input\day02'));
-$input = explode(',', $input);
+$input = file_get_contents(__DIR__ . '\input\day02');
+$code = explode(',', $input);
 
-echo 'Part 1: ' . runCode($input, 12, 2) . PHP_EOL;
-echo 'Part 2: ' . getReplacementsForTarget($input, 19690720) . PHP_EOL;
+echo 'Part 1: ' . runCode($code, 12, 2) . PHP_EOL;
+echo 'Part 2: ' . getReplacementsForTarget($code, 19690720) . PHP_EOL;
 
-function runCode($code, $replacement1, $replacement2) {
+function runCode(array $code, int $replacement1, int $replacement2) : int {
     $code[1] = $replacement1;
     $code[2] = $replacement2;
     $i = 0;
@@ -27,13 +27,12 @@ function runCode($code, $replacement1, $replacement2) {
     return $code[0];
 }
 
-function getReplacementsForTarget($input, $target) {
+function getReplacementsForTarget(array $code, int $target) : int {
     for ($noun = 0; $noun < 100; $noun++) {
         for ($verb = 0; $verb < 100; $verb++) {
-            if(runCode($input, $verb, $noun) == $target) {
+            if(runCode($code, $verb, $noun) == $target) {
                 return 100 * $noun + $verb;
             }
         }
     }
-    return null;
 }

@@ -1,9 +1,9 @@
 <?php
 
-$input = trim(file_get_contents(__DIR__ . '\input\day03'));
+$input = file_get_contents(__DIR__ . '\input\day03');
+$paths = explode(PHP_EOL, $input);
 
 $board = new Board();
-$paths = explode("\n", $input);
 foreach ($paths as $index => $pathString) {
     $path = explode(',', $pathString);
     $board->drawPath($index, $path);
@@ -12,9 +12,9 @@ foreach ($paths as $index => $pathString) {
 $minDistance = $minSteps = null;
 foreach ($board->crossings as $point) {
     $distance = $point->getDistance();
-     if (!$minDistance || $distance < $minDistance) {
-         $minDistance = $distance;
-     }
+    if (!$minDistance || $distance < $minDistance) {
+        $minDistance = $distance;
+    }
     if (!$minSteps || $point->stepsTaken < $minSteps) {
         $minSteps = $point->stepsTaken;
     }
@@ -24,12 +24,10 @@ echo 'Part 1: ' . $minDistance . PHP_EOL;
 echo 'Part 2: ' . $minSteps . PHP_EOL;
 
 class Board {
-    /** @var Point[] */
     public $points = [];
-    /** @var Point[] */
     public $crossings = [];
 
-    public function drawPath($marker, $path) {
+    public function drawPath(string $marker, array $path) {
         $x = $y = $stepsTaken = 0;
         foreach ($path as $step) {
             $axis = in_array($step[0], ['L', 'R']) ? 'x' : 'y';
@@ -56,14 +54,14 @@ class Point {
     public $marker;
     public $stepsTaken;
 
-    public function __construct($x, $y, $marker, $stepsTaken) {
+    public function __construct(int $x, int $y, string $marker, int $stepsTaken) {
         $this->x = $x;
         $this->y = $y;
         $this->marker = $marker;
         $this->stepsTaken = $stepsTaken;
     }
 
-    public function getDistance() {
+    public function getDistance() : int {
         return abs($this->x) + abs($this->y);
     }
 }
