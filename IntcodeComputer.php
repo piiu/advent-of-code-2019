@@ -8,6 +8,20 @@ class IntcodeComputer {
     private $inputs = [];
     private $isFinished = false;
 
+    const OPCODE_ADD = 1;
+    const OPCODE_MULTIPLY = 2;
+    const OPCODE_INPUT = 3;
+    const OPCODE_OUTPUT = 4;
+    const OPCODE_JUMP_IF_TRUE = 5;
+    const OPCODE_JUMP_IF_FALSE = 6;
+    const OPCODE_LESS_THAN = 7;
+    const OPCODE_EQUALS = 8;
+    const OPCODE_ADJUST_BASE = 9;
+
+    const MODE_POSITION = 0;
+    const MODE_PARAMETER = 1;
+    const MODE_RELATIVE = 2;
+
     public function __construct(array $code) {
         $this->defaultCode = array_map(function ($a) {
             return (int)$a;
@@ -26,7 +40,7 @@ class IntcodeComputer {
         while ($this->code[$this->currentPointer] !== 99) {
 
             $action = $this->code[$this->currentPointer];
-            $opcode = substr($action, -2);
+            $opcode = (int)substr($action, -2);
 
             $param1 = $this->getIndex(1, $action);
             $param2 = $this->getIndex(2, $action);
@@ -35,17 +49,17 @@ class IntcodeComputer {
             $param1Value = $this->code[$param1] ?? 0;
             $param2Value = $this->code[$param2] ?? 0;
 
-            if ($opcode == 1) {
+            if ($opcode == self::OPCODE_ADD) {
                 $this->code[$param3] = $param1Value + $param2Value;
                 $this->currentPointer += 4;
                 continue;
             }
-            if ($opcode == 2) {
+            if ($opcode == self::OPCODE_MULTIPLY) {
                 $this->code[$param3] = $param1Value * $param2Value;
                 $this->currentPointer += 4;
                 continue;
             }
-            if ($opcode == 3) {
+            if ($opcode == self::OPCODE_INPUT) {
                 if (empty($this->inputs)) {
                     return $output;
                 }
@@ -53,31 +67,31 @@ class IntcodeComputer {
                 $this->currentPointer += 2;
                 continue;
             }
-            if ($opcode == 4) {
+            if ($opcode == self::OPCODE_OUTPUT) {
                 $this->currentPointer += 2;
                 $output[] = $param1Value;
                 continue;
             }
-            if ($opcode == 5) {
+            if ($opcode == self::OPCODE_JUMP_IF_TRUE) {
                 $this->currentPointer = $param1Value ? $param2Value : $this->currentPointer + 3;
                 continue;
             }
-            if ($opcode == 6) {
+            if ($opcode == self::OPCODE_JUMP_IF_FALSE) {
                 $this->currentPointer = !$param1Value ? $param2Value : $this->currentPointer + 3;
                 continue;
             }
-            if ($opcode == 7) {
+            if ($opcode == self::OPCODE_LESS_THAN) {
                 $this->code[$param3] = $param1Value < $param2Value ? 1 : 0;
                 $this->currentPointer += 4;
                 continue;
             }
-            if ($opcode == 8) {
+            if ($opcode == self::OPCODE_EQUALS) {
                 $this->code[$param3] = $param1Value == $param2Value ? 1 : 0;
                 $this->currentPointer += 4;
                 continue;
             }
 
-            if ($opcode == 9) {
+            if ($opcode == self::OPCODE_ADJUST_BASE) {
                 $this->relativeBase += $param1Value;
                 $this->currentPointer += 2;
                 continue;
@@ -108,12 +122,15 @@ class IntcodeComputer {
 
     private function getIndex(int $paramNumber, int $action) : int {
         $paramMode = strlen($action) > $paramNumber + 1 ? (int)substr($action, -1 * ($paramNumber + 2), 1) : 0;
-        if ($paramMode == 0) {
+
+        if ($paramMode == self::MODE_POSITION) {
             return $this->code[$this->currentPointer + $paramNumber] ?? 0;
         }
-        if ($paramMode == 1) {
+        if ($paramMode == self::MODE_PARAMETER) {
             return $this->currentPointer + $paramNumber;
         }
-        return $this->code[$this->currentPointer + $paramNumber] + $this->relativeBase;
+        if ($paramMode == self::MODE_RELATIVE) {
+            return $this->code[$this->currentPointer + $paramNumber] + $this->relativeBase;
+        }
     }
 }
