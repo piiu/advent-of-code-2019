@@ -7,48 +7,52 @@ $moons = array_map(function(string $row) : Moon {
     return new Moon(new Coordinates($row));
 }, explode(PHP_EOL, $input));
 
-$step = $totalEnergy = 0;
-$allHaveInterval = false;
-while (!$allHaveInterval || $step < 1000) {
+$step = 0;
+$intervals = [];
+while (count($intervals) !== count(Coordinates::AXISES) || $step < 1000) {
     $step ++;
-    foreach ($moons as $moon) {
+
+    array_walk($moons, function(Moon $moon) use ($moons) {
         $moon->setVelocity($moons);
-    }
-    $allHaveInterval = true;
-    foreach ($moons as $moon) {
-        $moon->move($step);
-        if ($step === 1000) {
+    });
+    array_walk($moons, function(Moon $moon) {
+        $moon->move();
+    });
+
+    if ($step === 1000) {
+        $totalEnergy = 0;
+        foreach ($moons as $moon) {
             $totalEnergy += $moon->getEnergy();
         }
-        if (!$moon->interval) {
-            $allHaveInterval = false;
+        echo 'Part 1: '. $totalEnergy . PHP_EOL;
+    }
+
+    foreach (Coordinates::AXISES as $axis) {
+        if (isset($intervals[$axis])) {
+            continue;
         }
+        foreach ($moons as $moon) {
+            if (!$moon->isInitial($axis)) {
+                continue 2;
+            }
+        }
+        $intervals[$axis] = $step;
     }
 }
-
-echo 'Part 1: '. $totalEnergy . PHP_EOL;
-
-$lcm = 1;
-foreach ($moons as $moon) {
-    $lcm = lcm($lcm, $moon->interval);
-}
+$lcm = lcm(lcm($intervals['x'], $intervals['y']), $intervals['z']);
 
 echo 'Part 2: '. $lcm . PHP_EOL;
 
 class Moon {
     public $position;
     public $velocity;
-    public $interval;
 
     private $initialPosition;
-    private $positionInterval;
 
     public function __construct(Coordinates $position) {
         $this->position = $position;
-        $this->velocity = new Coordinates();
-
         $this->initialPosition = clone($this->position);
-        $this->positionInterval = new Coordinates();
+        $this->velocity = new Coordinates();
     }
 
     public function setVelocity(array $moons) {
@@ -63,30 +67,16 @@ class Moon {
         }
     }
 
-    public function move(int $step) {
+    public function move() {
         $this->position->add($this->velocity);
-        $this->updateIntervals($step);
     }
-
 
     public function getEnergy() : int {
         return $this->position->getEnergy() * $this->velocity->getEnergy();
     }
 
-    private function updateIntervals(int $step) {
-        $gotAllIntervals = true;
-        foreach (Coordinates::AXISES as $axis) {
-            if (empty($this->positionInterval->$axis)) {
-                if ($this->velocity->$axis === 0 && $this->position->$axis === $this->initialPosition->$axis) {
-                    $this->positionInterval->$axis = $step;
-                } else {
-                    $gotAllIntervals = false;
-                }
-            }
-        }
-        if (!$this->interval && $gotAllIntervals) {
-            $this->interval = $this->positionInterval->getLCM();
-        }
+    public function isInitial($axis) : bool {
+        return $this->velocity->$axis === 0 && $this->position->$axis === $this->initialPosition->$axis;
     }
 }
 
@@ -99,12 +89,8 @@ class Coordinates {
 
     public function __construct(string $coordinatesString = null) {
         if ($coordinatesString) {
-            $this->setCoordinatedFromString($coordinatesString);
+            $this->setCoordinatesFromString($coordinatesString);
         }
-    }
-
-    public function getLCM() : int {
-        return lcm(lcm($this->x, $this->y), $this->z);
     }
 
     public function add(Coordinates $vector) {
@@ -117,21 +103,21 @@ class Coordinates {
         return abs($this->x) + abs($this->y) + abs($this->z);
     }
 
-    private function setCoordinatedFromString(string $string) {
-        preg_match_all('/[xyz]=([0-9\-]*)[,>]/', $string, $matches);
+    private function setCoordinatesFromString(string $string) {
+        preg_match_all('/[a-z]=([0-9\-]*)[,>]/', $string, $matches);
         foreach (self::AXISES as $index=>$axis) {
             $this->$axis = (int)$matches[1][$index];
         }
     }
 }
 
-function lcm(int $m, int $n) {
+function lcm($m, $n) {
     if ($m == 0 || $n == 0) return 0;
     $r = ($m * $n) / gcd($m, $n);
     return abs($r);
 }
 
-function gcd(int $a, int $b) {
+function gcd($a, $b) {
     while ($b != 0) {
         $t = $b;
         $b = $a % $b;
