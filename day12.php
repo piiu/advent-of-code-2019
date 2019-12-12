@@ -1,4 +1,5 @@
 <?php
+require_once('Utils.php');
 
 $input = file_get_contents(__DIR__ . '\input\day12');
 
@@ -39,9 +40,7 @@ while (count($intervals) !== count(Coordinates::AXISES) || $step < 1000) {
         $intervals[$axis] = $step;
     }
 }
-$lcm = lcm(lcm($intervals['x'], $intervals['y']), $intervals['z']);
-
-echo 'Part 2: '. $lcm . PHP_EOL;
+echo 'Part 2: '. Utils::lcmForArray($intervals) . PHP_EOL;
 
 class Moon {
     public $position;
@@ -109,19 +108,4 @@ class Coordinates {
             $this->$axis = (int)$matches[1][$index];
         }
     }
-}
-
-function lcm($m, $n) {
-    if ($m == 0 || $n == 0) return 0;
-    $r = ($m * $n) / gcd($m, $n);
-    return abs($r);
-}
-
-function gcd($a, $b) {
-    while ($b != 0) {
-        $t = $b;
-        $b = $a % $b;
-        $a = $t;
-    }
-    return $a;
 }

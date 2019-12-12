@@ -1,11 +1,12 @@
 <?php
 require_once('IntcodeComputer.php');
+require_once('Utils.php');
 
 $input = file_get_contents(__DIR__ . '\input\day07');
 $code = explode(',', $input);
 
 $maxOutput = null;
-$phaseModifierCombinations = permutations([0,1,2,3,4]);
+$phaseModifierCombinations = Utils::permutations([0,1,2,3,4]);
 
 foreach ($phaseModifierCombinations as $phaseModifiers) {
     $signal = 0;
@@ -19,7 +20,7 @@ foreach ($phaseModifierCombinations as $phaseModifiers) {
 echo 'Part 1: ' . $maxOutput . PHP_EOL;
 
 $maxOutput = null;
-$phaseModifierCombinations = permutations([5,6,7,8,9]);
+$phaseModifierCombinations = Utils::permutations([5,6,7,8,9]);
 
 foreach ($phaseModifierCombinations as $phaseModifiers) {
     $signal = $iteration = 0;
@@ -47,16 +48,4 @@ function getFiveAmplifiers(array $code, array $phaseModifiers) : array {
         $amplifiers[] = $amplifier;
     }
     return $amplifiers;
-}
-
-function permutations(array $array, array $allCombinations = []) : array {
-    for ($i=0; count($allCombinations) < factorial(count($array)); $i++) {
-        shuffle($array);
-        $allCombinations[implode($array)] = $array;
-    }
-    return array_values($allCombinations);
-}
-
-function factorial(int $number) : int {
-    return $number <= 1 ? 1 : $number * factorial($number - 1);
 }

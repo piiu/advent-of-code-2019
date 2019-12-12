@@ -13,13 +13,21 @@ class Utils {
         return $number <= 1 ? 1 : $number * self::factorial($number - 1);
     }
 
-    public static function lcm($m, $n) {
+    public static function lcmForArray(array $array) : int {
+        $lcm = 1;
+        foreach ($array as $value) {
+            $lcm = self::lcm($lcm, $value);
+        }
+        return $lcm;
+    }
+
+    public static function lcm(int $m, int $n) : int {
         if ($m == 0 || $n == 0) return 0;
         $r = ($m * $n) / self::gcd($m, $n);
         return abs($r);
     }
 
-    public static function gcd($a, $b) {
+    public static function gcd(int $a, int $b) : int {
         while ($b != 0) {
             $t = $b;
             $b = $a % $b;
