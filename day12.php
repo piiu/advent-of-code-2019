@@ -8,63 +8,84 @@ $moons = array_map(function(string $row) : Moon {
 }, explode(PHP_EOL, $input));
 
 $step = $totalEnergy = 0;
-$isInitialPosition = false;
-while (!$isInitialPosition) {
+$allHaveInterval = false;
+while (!$allHaveInterval || $step < 1000) {
     $step ++;
-    $influences = getAllAxisPositionsFromList($moons);
-    $isInitialPosition = true;
     foreach ($moons as $moon) {
-        $moon->applyGravity($influences);
+        $moon->setVelocity($moons);
+    }
+    $allHaveInterval = true;
+    foreach ($moons as $moon) {
+        $moon->move($step);
         if ($step === 1000) {
             $totalEnergy += $moon->getEnergy();
         }
-        if (!$moon->isInitialPosition()) {
-            $isInitialPosition = false;
+        if (!$moon->interval) {
+            $allHaveInterval = false;
         }
     }
 }
 
 echo 'Part 1: '. $totalEnergy . PHP_EOL;
-echo 'Part 2: '. $step . PHP_EOL;
+
+$lcm = 1;
+foreach ($moons as $moon) {
+    $lcm = lcm($lcm, $moon->interval);
+}
+
+echo 'Part 2: '. $lcm . PHP_EOL;
 
 class Moon {
-    public $initialPosition;
-    public $initialVelocity;
-
     public $position;
     public $velocity;
+    public $interval;
+
+    private $initialPosition;
+    private $positionInterval;
 
     public function __construct(Coordinates $position) {
         $this->position = $position;
         $this->velocity = new Coordinates();
 
         $this->initialPosition = clone($this->position);
-        $this->initialVelocity = clone($this->velocity);
+        $this->positionInterval = new Coordinates();
     }
 
-    public function applyGravity(array $influences) {
-        foreach ($influences as $axis => $influence) {
-            $this->applyInfluenceForAxis($influence, $axis);
+    public function setVelocity(array $moons) {
+        foreach ($moons as $moon) {
+            foreach (Coordinates::AXISES as $axis) {
+                if ($moon->position->$axis === $this->position->$axis) {
+                    continue;
+                }
+                $modifier = $moon->position->$axis > $this->position->$axis ? 1 : -1;
+                $this->velocity->$axis += $modifier;
+            }
         }
-        $this->position->add($this->velocity);
     }
+
+    public function move(int $step) {
+        $this->position->add($this->velocity);
+        $this->updateIntervals($step);
+    }
+
 
     public function getEnergy() : int {
         return $this->position->getEnergy() * $this->velocity->getEnergy();
     }
 
-    public function isInitialPosition() : bool {
-        return $this->position->equals($this->initialPosition)
-            && $this->velocity->equals($this->initialVelocity);
-    }
-
-    private function applyInfluenceForAxis(array $influence, string $axis) {
-        foreach ($influence as $position) {
-            if ($position === $this->position->{$axis}) {
-                continue;
+    private function updateIntervals(int $step) {
+        $gotAllIntervals = true;
+        foreach (Coordinates::AXISES as $axis) {
+            if (empty($this->positionInterval->$axis)) {
+                if ($this->velocity->$axis === 0 && $this->position->$axis === $this->initialPosition->$axis) {
+                    $this->positionInterval->$axis = $step;
+                } else {
+                    $gotAllIntervals = false;
+                }
             }
-            $modifier = $position > $this->position->{$axis} ? 1 : -1;
-            $this->velocity->{$axis} += $modifier;
+        }
+        if (!$this->interval && $gotAllIntervals) {
+            $this->interval = $this->positionInterval->getLCM();
         }
     }
 }
@@ -74,42 +95,47 @@ class Coordinates {
     public $y = 0;
     public $z = 0;
 
+    const AXISES = ['x', 'y', 'z'];
+
     public function __construct(string $coordinatesString = null) {
         if ($coordinatesString) {
             $this->setCoordinatedFromString($coordinatesString);
         }
     }
 
-    public function add(Coordinates $a) {
-        $this->x += $a->x;
-        $this->y += $a->y;
-        $this->z += $a->z;
+    public function getLCM() : int {
+        return lcm(lcm($this->x, $this->y), $this->z);
+    }
+
+    public function add(Coordinates $vector) {
+        foreach (self::AXISES as $axis) {
+            $this->$axis += $vector->$axis;
+        }
     }
 
     public function getEnergy() : int {
         return abs($this->x) + abs($this->y) + abs($this->z);
     }
 
-    public function equals(Coordinates $coordinates) : bool {
-        return $this->x === $coordinates->x
-            && $this->y === $coordinates->y
-            && $this->z === $coordinates->z;
-    }
-
     private function setCoordinatedFromString(string $string) {
-        preg_match_all('/[xyz]\=([0-9\-]*)[,>]/', $string, $matches);
-        $this->x = (int)$matches[1][0];
-        $this->y = (int)$matches[1][1];
-        $this->z = (int)$matches[1][2];
+        preg_match_all('/[xyz]=([0-9\-]*)[,>]/', $string, $matches);
+        foreach (self::AXISES as $index=>$axis) {
+            $this->$axis = (int)$matches[1][$index];
+        }
     }
 }
 
-function getAllAxisPositionsFromList(array $moons) : array {
-    $axises = ['x', 'y', 'z'];
-    $influences = array_map(function(string $axis) use ($moons) : array {
-        return array_map(function(Moon $moon) use ($axis) : int {
-            return $moon->position->{$axis};
-        }, $moons);
-    }, $axises);
-    return array_combine($axises, $influences);
+function lcm(int $m, int $n) {
+    if ($m == 0 || $n == 0) return 0;
+    $r = ($m * $n) / gcd($m, $n);
+    return abs($r);
+}
+
+function gcd(int $a, int $b) {
+    while ($b != 0) {
+        $t = $b;
+        $b = $a % $b;
+        $a = $t;
+    }
+    return $a;
 }
