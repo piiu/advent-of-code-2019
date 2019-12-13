@@ -53,15 +53,17 @@ class Utils {
         $minY = min(array_keys($board));
         $maxY = max(array_keys($board));
 
+        $output = '';
         for ($y = $minY; $y <= $maxY; $y++) {
             for ($x = $minX; $x <= $maxX; $x++) {
                 if (!isset($board[$y][$x])) {
-                    echo ' ';
+                    $output .= ' ';
                     continue;
                 }
-                echo $elementDefinitions[$board[$y][$x]];
+                $output .= $elementDefinitions[$board[$y][$x]];
             }
-            echo PHP_EOL;
+            $output .= PHP_EOL;
         }
+        echo $output;
     }
 }

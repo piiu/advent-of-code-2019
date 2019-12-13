@@ -11,11 +11,11 @@ echo 'Part 1: '. $arcade->getNumberOfBlocks() . PHP_EOL;
 $arcade = new Arcade($code, 2);
 while ($arcade->getNumberOfBlocks()) {
     if ($arcade->paddleX < $arcade->ballX) {
-        $arcade->updateState(1);
+        $arcade->moveRight();
     } elseif ($arcade->paddleX > $arcade->ballX) {
-        $arcade->updateState(-1);
+        $arcade->moveLeft();
     } else {
-        $arcade->updateState(0);
+        $arcade->stay();
     }
     //$arcade->draw();
 }
@@ -50,7 +50,19 @@ class Arcade {
         $this->updateState(null);
     }
 
-    public function updateState(int $input = null) {
+    public function moveLeft() {
+        $this->updateState(-1);
+    }
+
+    public function moveRight() {
+        $this->updateState(1);
+    }
+
+    public function stay() {
+        $this->updateState(0);
+    }
+
+    private function updateState(int $input = null) {
         if ($input !== null) {
             $this->paddleX += $input;
             $this->computer->addInput($input);
@@ -93,8 +105,9 @@ class Arcade {
     }
 
     public function draw() {
-        usleep( 500000 );
-        for ($i = 0; $i < 20; $i++) echo "\r\n";
+        usleep(300000);
+        for ($i = 0; $i < 30; $i++) echo PHP_EOL;
+        echo 'Score: ' . $this->score . PHP_EOL;
         Utils::drawBoard($this->state, self::TILE_DRAW_MAPPING);
     }
 }
