@@ -35,4 +35,33 @@ class Utils {
         }
         return $a;
     }
+
+    public static function drawBoard(array $board, array $elementDefinitions) {
+        $minX = null;
+        $maxX = null;
+        foreach ($board as $row) {
+            foreach (array_keys($row) as $index) {
+                if ($minX === null || $minX > $index) {
+                    $minX = $index;
+                }
+                if ($maxX === null || $maxX < $index) {
+                    $maxX = $index;
+                }
+            }
+        }
+
+        $minY = min(array_keys($board));
+        $maxY = max(array_keys($board));
+
+        for ($y = $minY; $y <= $maxY; $y++) {
+            for ($x = $minX; $x <= $maxX; $x++) {
+                if (!isset($board[$y][$x])) {
+                    echo ' ';
+                    continue;
+                }
+                echo $elementDefinitions[$board[$y][$x]];
+            }
+            echo PHP_EOL;
+        }
+    }
 }

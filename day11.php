@@ -1,5 +1,6 @@
 <?php
 require_once('IntcodeComputer.php');
+require_once('Utils.php');
 
 const DIRECTIONS = ['<', '^', '>', 'v'];
 const WHITE = 1;
@@ -16,32 +17,12 @@ echo 'Part 1: '. $robot->paintedPanels . PHP_EOL;
 $board[0][0] = WHITE;
 $robot = new Robot($code, $board);
 $board = $robot->paintBoard();
+
 echo 'Part 2: '. PHP_EOL;
-
-$minX = null;
-$maxX = null;
-foreach ($board as $row) {
-    foreach (array_keys($row) as $index) {
-        if (!$minX || $minX > $index) {
-            $minX = $index;
-        }
-        if (!$maxX || $maxX < $index) {
-            $maxX = $index;
-        }
-    }
-}
-
-$minY = min(array_keys($board));
-$maxY = max(array_keys($board));
-
-//for ($y = $minY; $y <= $maxY; $y++) {
-for ($y = $maxY; $y >= $minY; $y--) {
-    for ($x = $minX; $x <= $maxX; $x++) {
-        $color = $board[$y][$x] ?? BLACK;
-        echo $color == WHITE ? 'X' : ' ';
-    }
-    echo PHP_EOL;
-}
+Utils::drawBoard($board, [
+    WHITE => 'X',
+    BLACK => ' '
+]);
 
 class Robot {
     private $computer;
@@ -91,13 +72,13 @@ class Robot {
                 $this->x -= 1;
                 break;
             case '^':
-                $this->y += 1;
+                $this->y -= 1;
                 break;
             case '>':
                 $this->x += 1;
                 break;
             case 'v':
-                $this->y -= 1;
+                $this->y += 1;
         }
     }
 }

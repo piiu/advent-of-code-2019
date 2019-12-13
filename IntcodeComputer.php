@@ -120,6 +120,10 @@ class IntcodeComputer {
         return $this->isFinished;
     }
 
+    public function setPosition(int $index, int $value) {
+        $this->code[$index] = $value;
+    }
+
     private function getIndex(int $paramNumber, int $action) : int {
         $paramMode = strlen($action) > $paramNumber + 1 ? (int)substr($action, -1 * ($paramNumber + 2), 1) : 0;
 
