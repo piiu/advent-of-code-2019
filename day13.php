@@ -37,8 +37,8 @@ class Arcade {
     const TILE_DRAW_MAPPING = [
         self::TILE_EMPTY => ' ',
         self::TILE_WALL => '#',
-        self::TILE_BLOCK => '-',
-        self::TILE_PADDLE => '▂',
+        self::TILE_BLOCK => '×',
+        self::TILE_PADDLE => '-',
         self::TILE_BALL => 'o',
     ];
 
