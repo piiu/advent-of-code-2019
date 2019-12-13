@@ -10,7 +10,6 @@ echo 'Part 1: '. $arcade->getNumberOfBlocks() . PHP_EOL;
 
 $arcade = new Arcade($code, 2);
 while ($arcade->getNumberOfBlocks()) {
-    $arcade->draw();
     if ($arcade->paddleX < $arcade->ballX) {
         $arcade->updateState(1);
     } elseif ($arcade->paddleX > $arcade->ballX) {
@@ -18,8 +17,8 @@ while ($arcade->getNumberOfBlocks()) {
     } else {
         $arcade->updateState(0);
     }
+    //$arcade->draw();
 }
-$arcade->draw();
 echo 'Part 2: '. $arcade->score . PHP_EOL;
 
 class Arcade {
@@ -38,8 +37,8 @@ class Arcade {
     const TILE_DRAW_MAPPING = [
         self::TILE_EMPTY => ' ',
         self::TILE_WALL => '#',
-        self::TILE_BLOCK => 'X',
-        self::TILE_PADDLE => '-',
+        self::TILE_BLOCK => '-',
+        self::TILE_PADDLE => '▂',
         self::TILE_BALL => 'o',
     ];
 
@@ -94,6 +93,8 @@ class Arcade {
     }
 
     public function draw() {
+        usleep( 500000 );
+        for ($i = 0; $i < 20; $i++) echo "\r\n";
         Utils::drawBoard($this->state, self::TILE_DRAW_MAPPING);
     }
 }
