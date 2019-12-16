@@ -4,33 +4,28 @@ require_once('IntcodeComputer.php');
 $input = file_get_contents(__DIR__ . '/input/day15');
 $code = explode(',', $input);
 
-const WALL = '#';
-const OXYGEN = 'O';
-
-const NORTH = 1;
-const SOUTH = 2;
-const WEST = 3;
-const EAST = 4;
-
-const DIRECTIONS = [NORTH, EAST, SOUTH, WEST];
-
-$board[0][0] = 0;
+$map = new Map();
 $droid = new Droid($code);
 $tankLocation = null;
 
-while (!$tankLocation || !$droid->isInStartingLocation()) {
-    $direction = $droid->getBestDirection($board);
-    list($previousX, $previousY) = $droid->getCurrentLocation();
-    list($x, $y) = $droid->getLocationInDirection($direction);
-    $droid->move($direction);
+while (!$tankLocation || !$map->droidInStartingLocation()) {
+    $direction = $map->getBestDirection();
+    $droid->tryDirection($direction);
+    $testedLocation = new Location($map->droidLocation->x, $map->droidLocation->y, $direction);
+
     if ($droid->status === Droid::STATUS_WALL) {
-        $board[$y][$x] = WALL;
-    } elseif (!isset($board[$y][$x])) {
-        $board[$y][$x] = $board[$previousY][$previousX] + 1;
+        $map->setWall($testedLocation);
+        continue;
     }
+    if (!$map->hasSomething($testedLocation)) {
+        $currentSteps = $map->getValue($map->droidLocation);
+        $map->setValue($testedLocation, $currentSteps + 1);
+    }
+    $map->droidLocation = $testedLocation;
+
     if ($droid->status === Droid::STATUS_TANK) {
-        $tankLocation = $droid->getCurrentLocation();
-        echo 'Part 1: '. $board[$droid->locationY][$droid->locationX] . PHP_EOL;
+        $tankLocation = clone($map->droidLocation);
+        echo 'Part 1: '. $map->getValue($map->droidLocation) . PHP_EOL;
     }
 }
 
@@ -39,12 +34,11 @@ $tick = 0;
 while (!empty($locationsToSpreadFrom)) {
     foreach ($locationsToSpreadFrom as $key => $location) {
         unset($locationsToSpreadFrom[$key]);
-        list($currentX, $currentY) = $location;
-        $board[$currentY][$currentX] = OXYGEN;
-        foreach (DIRECTIONS as $direction) {
-            list($x, $y) = getLocationForDirection($currentX, $currentY, $direction);
-            if ($board[$y][$x] !== WALL && $board[$y][$x] !== OXYGEN) {
-                $locationsToSpreadFrom[] = [$x, $y];
+        $map->setOxygen($location);
+        foreach (Location::DIRECTIONS as $direction) {
+            $newLocation = new Location($location->x, $location->y, $direction);
+            if (!$map->isWall($newLocation) && !$map->isOxygen($newLocation)) {
+                $locationsToSpreadFrom[] = $newLocation;
             }
         }
     }
@@ -55,11 +49,115 @@ while (!empty($locationsToSpreadFrom)) {
     $tick++;
 }
 
+class Map {
+    public $state = [];
+    public $droidLocation;
+
+    const WALL = '#';
+    const OXYGEN = 'O';
+
+    public function __construct() {
+        $this->droidLocation = new Location(0,0);
+    }
+
+    public function getBestDirection() : int {
+        $minWalkedDirection = null;
+        $minWalkedDistance = null;
+        foreach (Location::DIRECTIONS as $direction) {
+            $location = new Location($this->droidLocation->x, $this->droidLocation->y, $direction);
+
+            if (!$this->hasSomething($location)) {
+                return $direction;
+            }
+            if ($this->isWall($location)) {
+                continue;
+            }
+            $distance = $this->getValue($location);
+            if ($minWalkedDistance === null || $distance < $minWalkedDistance) {
+                $minWalkedDistance = $distance;
+                $minWalkedDirection = $direction;
+            }
+        }
+        return $minWalkedDirection;
+    }
+
+    public function hasSomething(Location $location) {
+        return isset($this->state[$location->y][$location->x]);
+    }
+
+    public function isWall(Location $location) {
+        return $this->hasSomething($location) && $this->state[$location->y][$location->x] === self::WALL;
+    }
+
+    public function isOxygen(Location $location) {
+        return $this->hasSomething($location) && $this->state[$location->y][$location->x] === self::OXYGEN;
+    }
+
+    public function getValue(Location $location) {
+        if (!$this->hasSomething($location) || $this->isWall($location)) {
+            return null;
+        }
+        return $this->state[$location->y][$location->x];
+    }
+
+    public function setWall(Location $location) {
+        $this->state[$location->y][$location->x] = self::WALL;
+    }
+
+    public function setOxygen(Location $location) {
+        $this->state[$location->y][$location->x] = self::OXYGEN;
+    }
+
+    public function setValue(Location $location, $value) {
+        $this->state[$location->y][$location->x] = $value;
+
+    }
+
+    public function droidInStartingLocation() {
+        return $this->droidLocation->x === 0 && $this->droidLocation->y === 0;
+    }
+}
+
+class Location {
+    public $x;
+    public $y;
+
+    const NORTH = 1;
+    const SOUTH = 2;
+    const WEST = 3;
+    const EAST = 4;
+
+    const DIRECTIONS = [self::NORTH, self::EAST, self::SOUTH, self::WEST];
+
+    public function __construct(int $x, int $y, int $direction = null) {
+        $this->x = $x;
+        $this->y = $y;
+
+        if ($direction) {
+            $this->addDirection($direction);
+        }
+    }
+
+    public function addDirection(int $direction) {
+        if ($direction == self::NORTH) {
+            $this->y += 1;
+        }
+        if ($direction == self::SOUTH) {
+            $this->y -= 1;
+        }
+        if ($direction == self::WEST) {
+            $this->x += 1;
+        }
+        if ($direction == self::EAST) {
+            $this->x -= 1;
+        }
+        return $this;
+    }
+}
+
 class Droid {
     private  $computer;
     public $status;
-    public $locationX = 0;
-    public $locationY = 0;
 
     const STATUS_WALL = 0;
     const STATUS_STEP = 1;
@@ -69,56 +167,7 @@ class Droid {
         $this->computer = new IntcodeComputer($code);
     }
 
-    public function getBestDirection(array $board) : int {
-        $minWalkedDirection = null;
-        $minWalkedDistance = null;
-        foreach (DIRECTIONS as $direction) {
-            list($x, $y) = $this->getLocationInDirection($direction);
-            if (!isset($board[$y][$x])) {
-                return $direction;
-            }
-            if (isset($board[$y][$x]) && $board[$y][$x] === WALL) {
-                continue;
-            }
-            if ($minWalkedDistance === null || $board[$y][$x] < $minWalkedDistance) {
-                $minWalkedDistance = $board[$y][$x];
-                $minWalkedDirection = $direction;
-            }
-        }
-        return $minWalkedDirection;
-    }
-
-    public function getCurrentLocation() {
-        return [$this->locationX, $this->locationY];
-    }
-
-    public function move(int $direction) {
+    public function tryDirection(int $direction) {
         $this->status = $this->computer->addInput($direction)->getFirstOutput();
-        if ($this->status !== self::STATUS_WALL) {
-            list($this->locationX, $this->locationY) = $this->getLocationInDirection($direction);
-        }
-    }
-
-    public function getLocationInDirection(int $direction) : array {
-        return getLocationForDirection($this->locationX, $this->locationY, $direction);
-    }
-
-    public function isInStartingLocation() {
-        return $this->locationX === 0 && $this->locationY === 0;
-    }
-}
-
-function getLocationForDirection(int $x, int $y, int $direction) {
-    if ($direction == NORTH) {
-        return [$x, $y + 1];
-    }
-    if ($direction == SOUTH) {
-        return [$x, $y - 1];
-    }
-    if ($direction == WEST) {
-        return [$x - 1, $y];
-    }
-    if ($direction == EAST) {
-        return [$x + 1, $y];
     }
 }
