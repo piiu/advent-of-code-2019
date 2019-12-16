@@ -60,7 +60,7 @@ class Utils {
                     $output .= ' ';
                     continue;
                 }
-                $output .= $elementDefinitions[$board[$y][$x]];
+                $output .= $elementDefinitions[$board[$y][$x]] ?? ' ';
             }
             $output .= PHP_EOL;
         }
