@@ -8,9 +8,33 @@ foreach ($rows as $reactionDefinition) {
     $reactions[] = new Reaction($reactionDefinition);
 }
 
-$requiredComponents = ['FUEL' => 1];
 getFromReactionOrLeftovers('FUEL', 1, $reactions, $oreCount);
 echo 'Part 1: '. $oreCount . PHP_EOL;
+
+
+$target = 1000000000000;
+$fuelReceived = floor($target / $oreCount); // Initial estimate
+$precisionMode = false;
+while (true) {
+    $oreCount = 0;
+    getFromReactionOrLeftovers('FUEL', $fuelReceived, $reactions, $oreCount);
+
+    if (!$precisionMode) {
+        $newEstimate = $fuelReceived * floor($target / $oreCount);
+        if ($newEstimate === $fuelReceived) {
+            $precisionMode = true;
+            $modifier = $fuelReceived < $target ? 1 : -1;
+        }
+        $fuelReceived = $newEstimate;
+    } else {
+        if (($modifier === 1 && $oreCount > $target) || $modifier === -1 && $oreCount < $target) {
+            break;
+        }
+        $fuelReceived += $modifier;
+    }
+}
+echo 'Part 1: '. ($fuelReceived - $modifier) . PHP_EOL;
+
 
 function getFromReactionOrLeftovers(string $name, int $need, $reactions, &$oreCount = 0, &$myComponents = []) : void {
     if ($name === 'ORE') {
