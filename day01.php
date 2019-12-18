@@ -1,7 +1,7 @@
 <?php
 
 $input = file_get_contents(__DIR__ . '\input\day01');
-$modules = explode(PHP_EOL, $input);
+$modules = explode("\n", $input);
 
 $sum1 = $sum2 = 0;
 foreach ($modules as $mass) {

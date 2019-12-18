@@ -36,7 +36,7 @@ class Utils {
         return $a;
     }
 
-    public static function drawBoard(array $board, array $elementDefinitions) {
+    public static function drawBoard(array $board, array $elementDefinitions = []) {
         $minX = null;
         $maxX = null;
         foreach ($board as $row) {
@@ -60,7 +60,7 @@ class Utils {
                     $output .= ' ';
                     continue;
                 }
-                $output .= $elementDefinitions[$board[$y][$x]] ?? ' ';
+                $output .= $elementDefinitions[$board[$y][$x]] ?? $board[$y][$x];
             }
             $output .= PHP_EOL;
         }

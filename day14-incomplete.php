@@ -9,26 +9,34 @@ foreach ($rows as $reactionDefinition) {
 }
 
 $requiredComponents = ['FUEL' => 1];
-while (count($requiredComponents) > 1 || key($requiredComponents) !== 'ORE') {
-    foreach ($requiredComponents as $name => $quantity) {
-        if ($name === 'ORE') {
-            continue;
-        }
-        unset($requiredComponents[$name]);
-        $reaction = Reaction::getByOutput($reactions, $name);
-        $multiplier = (int)ceil($quantity / reset($reaction->outputs));
+getFromReactionOrLeftovers('FUEL', 1, $reactions, $oreCount);
+echo 'Part 1: '. $oreCount . PHP_EOL;
 
-        foreach ($reaction->inputs as $inputName => $inputQuantity) {
-            if (isset($requiredComponents[$inputName])) {
-                $requiredComponents[$inputName] += $inputQuantity * $multiplier;
-            } else {
-                $requiredComponents[$inputName] = $inputQuantity * $multiplier;
-            }
-        }
+function getFromReactionOrLeftovers(string $name, int $need, $reactions, &$oreCount = 0, &$myComponents = []) : void {
+    if ($name === 'ORE') {
+        $oreCount += $need;
+        return;
+    }
+
+    $have = $myComponents[$name] ?? 0;
+    unset($myComponents[$name]);
+
+    if ($have >= $need) {
+        $myComponents[$name] = $have - $need;
+        return;
+    }
+    $need = $need - $have;
+
+    $reaction = Reaction::getByOutput($reactions, $name);
+    $output = reset($reaction->outputs);
+    $multiplier = ceil($need / $output);
+    $producedQuantity = $output * $multiplier;
+    $myComponents[$name] = $producedQuantity - $need;
+
+    foreach ($reaction->inputs as $inputName => $inputQuantity) {
+        getFromReactionOrLeftovers($inputName, $inputQuantity * $multiplier, $reactions, $oreCount, $myComponents);
     }
 }
-echo 'Part 1: '. reset($requiredComponents) . PHP_EOL;
-
 
 class Reaction {
     public $inputs = [];
