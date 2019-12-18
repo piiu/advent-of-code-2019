@@ -11,7 +11,6 @@ foreach ($rows as $reactionDefinition) {
 getFromReactionOrLeftovers('FUEL', 1, $reactions, $oreCount);
 echo 'Part 1: '. $oreCount . PHP_EOL;
 
-
 $target = 1000000000000;
 $fuelReceived = floor($target / $oreCount); // Initial estimate
 $precisionMode = false;
@@ -33,8 +32,7 @@ while (true) {
         $fuelReceived += $modifier;
     }
 }
-echo 'Part 1: '. ($fuelReceived - $modifier) . PHP_EOL;
-
+echo 'Part 2: '. ($fuelReceived - $modifier) . PHP_EOL;
 
 function getFromReactionOrLeftovers(string $name, int $need, $reactions, &$oreCount = 0, &$myComponents = []) : void {
     if ($name === 'ORE') {
