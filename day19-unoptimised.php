@@ -11,7 +11,7 @@ $drone->buildMap(50);
 echo 'Part 1: '. $drone->affectedPoints . PHP_EOL;
 
 $drone = new Drone($code);
-echo 'Part 2: '. $drone->buildUntilFits(100, 230, 730) . PHP_EOL;
+echo 'Part 2: '. $drone->buildUntilFits(100, 230, 730) . PHP_EOL; //Optimal initial values calculated on paper
 //$drone->draw();
 
 

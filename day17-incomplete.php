@@ -9,70 +9,52 @@ $robot = new VacuumRobot($code);
 echo 'Part 1: '. $robot->getCalibration() . PHP_EOL;
 
 $robot->wake();
-$robot->addInputs([
-    ['A','B','C'],
-    ['L','1'],
-    ['L','1'],
-    ['L','2']
+$output = $robot->getDustCollected([
+    'A,A,B,C,B,A,C,B,C,A',
+    'L,6,R,12,L,6,L,8,L,8',
+    'L,6,R,12,R,8,L,8',
+    'L,4,L,4,L,6'
 ]);
-$robot->getCameraFeed();
+echo 'Part 2: '. array_pop($output) . PHP_EOL;
 
 class VacuumRobot {
     private $computer;
     private $scaffolding;
 
     const NEWLINE = 10;
-    const COMMA = 44;
     const SCAFFOLD = 35;
-    const SPACE = 46;
-    const ROBOT = 94;
-
-    const OUTPUT_MAP = [
-        self::SCAFFOLD => '#',
-        self::SPACE => '.',
-        self::ROBOT => '^'
-    ];
 
     public function __construct(array $code) {
         $this->computer = new IntcodeComputer($code);
     }
 
     public function getCalibration() {
-        $this->getCameraFeed();
-        return $this->getAlignmentParameterSum();
-    }
-
-    public function getCameraFeed() {
         $output = $this->computer->getOutput();
-        $this->drawScaffolding($output);
-    }
-
-    public function drawScaffolding(array $input) {
         $row = 0;
         $this->scaffolding = [];
-        foreach ($input as $element) {
+        foreach ($output as $element) {
             if ($element === self::NEWLINE) {
                 $row++;
             } else {
                 $this->scaffolding[$row][] = $element;
             }
         }
-        Utils::drawBoard($this->scaffolding, self::OUTPUT_MAP);
+        return $this->getAlignmentParameterSum();
     }
 
-    public function addInputs(array $inputs, $showVideo = true) {
-        foreach ($inputs as $input) {
-            $input = array_map(function($char) {
-                return ord($char);
-            }, $input);
-            foreach ($input as $char) {
-                $this->computer->addInput($char);
-                $this->computer->addInput(self::COMMA);
+    public function getDustCollected(array $inputs) {
+        $this->computer->getOutput();
+        foreach ($inputs as $inputString) {
+            $chars = str_split($inputString);
+            foreach ($chars as $char) {
+                $this->computer->addInput(ord($char));
             }
             $this->computer->addInput(self::NEWLINE);
+            $this->computer->getOutput();
         }
-        $this->computer->addInput( $showVideo ? ord('y') : ord('n'));
+        $this->computer->addInput(ord('n'));
         $this->computer->addInput(self::NEWLINE);
+        return $this->computer->getOutput();
     }
 
     private function getAlignmentParameterSum() {
