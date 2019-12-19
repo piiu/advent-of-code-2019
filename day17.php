@@ -1,6 +1,5 @@
 <?php
 require_once('IntcodeComputer.php');
-require_once('Utils.php');
 
 $input = file_get_contents(__DIR__ . '/input/day17');
 $code = explode(',', $input);
@@ -9,13 +8,13 @@ $robot = new VacuumRobot($code);
 echo 'Part 1: '. $robot->getCalibration() . PHP_EOL;
 
 $robot->wake();
-$output = $robot->getDustCollected([
+$dust = $robot->getDustCollected([
     'A,A,B,C,B,A,C,B,C,A',
     'L,6,R,12,L,6,L,8,L,8',
     'L,6,R,12,R,8,L,8',
     'L,4,L,4,L,6'
 ]);
-echo 'Part 2: '. array_pop($output) . PHP_EOL;
+echo 'Part 2: '. $dust . PHP_EOL;
 
 class VacuumRobot {
     private $computer;
@@ -54,7 +53,8 @@ class VacuumRobot {
         }
         $this->computer->addInput(ord('n'));
         $this->computer->addInput(self::NEWLINE);
-        return $this->computer->getOutput();
+        $output = $this->computer->getOutput();
+        return array_pop($output);
     }
 
     private function getAlignmentParameterSum() {
