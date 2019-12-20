@@ -35,7 +35,7 @@ class Vault {
         }
     }
 
-    public function solve(Location $location = null, array $mapState = null, $stepsTaken = 0) {
+    public function solve(Location $location = null, array $mapState = null, $stepsTaken = 0, $currentPath = []) {
         $location = $location ?? $this->currentLocation;
         $mapState = $mapState ?? $this->map;
 
@@ -52,8 +52,9 @@ class Vault {
         foreach ($keyLocations as $keyLocation) {
             $newMapState = $mapState;
             $key = $newMapState[$keyLocation->y][$keyLocation->x];
+            $currentPath[] = $key;
             $this->useKey($newMapState, $key);
-            $this->solve($keyLocation, $newMapState, $stepsTaken + $keyLocation->stepsTo);
+            $this->solve($keyLocation, $newMapState, $stepsTaken + $keyLocation->stepsTo, $currentPath);
         }
     }
 
