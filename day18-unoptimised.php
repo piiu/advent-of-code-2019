@@ -5,13 +5,15 @@ $input = file_get_contents(__DIR__ . '/input/day18');
 $vault = new Vault($input);
 
 $vault->solve();
-echo 'Part 1: '. min($vault->allPaths) . PHP_EOL;
+echo 'Part 1: '. $vault->minPath . PHP_EOL;
 
 
 class Vault {
     private $map = [];
+    private $numberOfKeys = 0;
+    private $pathsTested = 0;
     public $currentLocation;
-    public $allPaths = [];
+    public $minPath = null;
 
     const PASSAGE = '.';
     const WALL = '#';
@@ -30,6 +32,9 @@ class Vault {
                     $this->currentLocation = new Location($x, $y);
                     $char = self::PASSAGE;
                 }
+                if (preg_match(self::KEY, $char)) {
+                    $this->numberOfKeys++;
+                }
                 $this->map[$y][$x] = $char;
             }
         }
@@ -39,12 +44,15 @@ class Vault {
         $location = $location ?? $this->currentLocation;
         $mapState = $mapState ?? $this->map;
 
-        if (!empty($this->allPaths) && $stepsTaken >= min($this->allPaths)) {
+        if ($this->minPath && $stepsTaken >= $this->minPath) {
+            echo 'tested: '. $this->pathsTested . ', best: ' .  $this->minPath . PHP_EOL;
+            $this->pathsTested++;
             return;
         }
 
-        if ($this->getNumberOfKeys($mapState) === 0) {
-            $this->allPaths[] = $stepsTaken;
+        if (count($currentPath) === $this->numberOfKeys) {
+            $this->pathsTested++;
+            $this->minPath = $stepsTaken;
             return;
         }
 
@@ -52,9 +60,8 @@ class Vault {
         foreach ($keyLocations as $keyLocation) {
             $newMapState = $mapState;
             $key = $newMapState[$keyLocation->y][$keyLocation->x];
-            $currentPath[] = $key;
             $this->useKey($newMapState, $key);
-            $this->solve($keyLocation, $newMapState, $stepsTaken + $keyLocation->stepsTo, $currentPath);
+            $this->solve($keyLocation, $newMapState, $stepsTaken + $keyLocation->stepsTo, array_merge($currentPath, [$key]));
         }
     }
 
@@ -68,11 +75,11 @@ class Vault {
                 unset($locationsToSpreadFrom[$index]);
                 foreach (Location::DIRECTIONS as $direction) {
                     $newLocation = new Location($location->x, $location->y, $direction);
-                    if ($this->isWall($mapState, $newLocation) || $this->isDoor($mapState, $newLocation) || $this->isExplored($mapState, $newLocation)) {
-                        continue;
-                    }
                     if ($this->isKey($mapState, $newLocation)) {
                         $keyLocations[] = new Location($newLocation->x, $newLocation->y, null, $stepsTaken);
+                    }
+                    if ($this->isWall($mapState, $newLocation) || $this->isDoor($mapState, $newLocation) || $this->isExplored($mapState, $newLocation) || $this->isKey($mapState, $newLocation)) {
+                        continue;
                     }
                     $this->markExplored($mapState, $newLocation);
                     $locationsToSpreadFrom[] = $newLocation;
@@ -110,24 +117,6 @@ class Vault {
                 }
             }
         }
-    }
-
-    public function getNumberOfKeys(array $mapState) : int {
-        $count = 0;
-        foreach ($mapState as $row) {
-            foreach ($row as $char) {
-                if (preg_match(self::KEY, $char)) {
-                    $count++;
-                }
-            }
-        }
-        return $count;
-    }
-
-    public function draw() {
-        $mapCopy = $this->map;
-        $mapCopy[$this->currentLocation->y][$this->currentLocation->x] = self::MY_LOCATION;
-        Utils::drawBoard($mapCopy);
     }
 }
 
