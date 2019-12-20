@@ -52,8 +52,8 @@ class Vault {
 
         if (count($currentPath) === $this->numberOfKeys) {
             $this->pathsTested++;
-            $this->outputProgress();
             $this->minPath = $stepsTaken;
+            $this->outputProgress();
             return;
         }
 
@@ -67,7 +67,7 @@ class Vault {
     }
 
     private function outputProgress() {
-        //echo 'tested: '. $this->pathsTested . ', best: ' .  $this->minPath . PHP_EOL;
+        echo 'tested: '. $this->pathsTested . ', best: ' .  $this->minPath . PHP_EOL;
     }
 
     private function getClosestKeys(array $mapState, Location $Location) {
