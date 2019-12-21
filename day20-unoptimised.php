@@ -7,7 +7,7 @@ $input = file_get_contents(__DIR__ . '/input/day20');
 $maze = DonutMaze::createFromInput($input);
 echo 'Part 1: '. $maze->solve(false) . PHP_EOL;
 
-$maxNestingLevel = 255;
+$maxNestingLevel = 0;
 
 do {
     $maze = DonutMaze::createFromInput($input);
