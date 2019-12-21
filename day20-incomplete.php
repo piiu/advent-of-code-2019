@@ -55,10 +55,16 @@ class DonutMaze {
         return $maze;
     }
 
-    public function solve(bool $recursive, Location $currentLocation = null, Portal $usedPortal = null, array $levelStates = []) {
+    public function solve(bool $recursive, Location $currentLocation = null, Portal $usedPortal = null, int $nestingLevel = 0) {
         $locationsToSpreadFrom = [$currentLocation ?? $this->startingLocation];
+
+        if ($nestingLevel > 100) {
+            return false;
+        }
+
         while (!empty($locationsToSpreadFrom)) {
             $this->stepsTaken++;
+
             foreach ($locationsToSpreadFrom as $index => $location) {
                 unset($locationsToSpreadFrom[$index]);
                 $this->setExplored($location);
@@ -94,19 +100,13 @@ class DonutMaze {
                             continue;
                         }
 
-                        echo 'Level: '.$this->level . PHP_EOL;
+                        echo 'Level: '.$this->level . ', step: ' . $this->stepsTaken . PHP_EOL;
                         Utils::drawBoard($this->map);
 
-                        $levelStates[$this->level] = $this;
                         $level = $this->level + ($portal->isOuter ? -1 : 1);
+                        $newLevel = $this->cloneWithCleanMap($portal->otherEnd->passage, $level);
 
-                        if (isset($levelStates[$level])) {
-                            $newLevel = $levelStates[$level];
-                        } else {
-                            $newLevel = $this->cloneWithCleanMap($portal->otherEnd->passage, $level);
-                        }
-
-                        if ($newLevel->solve(true, $portal->otherEnd->passage, $portal, $levelStates)) {
+                        if ($newLevel->solve(true, $portal->otherEnd->passage, $portal, $nestingLevel + 1)) {
                             return true;
                         }
                     }
