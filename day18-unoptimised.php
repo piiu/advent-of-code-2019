@@ -17,7 +17,7 @@ class Vault {
 
     const PASSAGE = '.';
     const WALL = '#';
-    const MY_Location = '@';
+    const MY_LOCATION = '@';
     const EXPLORED = 'X';
 
     const KEY = '/^[a-z]$/';
@@ -28,7 +28,7 @@ class Vault {
         foreach ($rows as $y => $row) {
             $chars = str_split($row);
             foreach ($chars as $x => $char) {
-                if ($char === self::MY_Location) {
+                if ($char === self::MY_LOCATION) {
                     $this->currentLocation = new Location($x, $y);
                     $char = self::PASSAGE;
                 }
