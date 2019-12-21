@@ -38,4 +38,12 @@ class Location {
         }
         return $this;
     }
+
+    public function isEqual(self $location) {
+        return $this->x === $location->x && $this->y === $location->y;
+    }
+
+    public function getValueFromMap(array $map) {
+        return $map[$this->y][$this->x] ?? null;
+    }
 }
