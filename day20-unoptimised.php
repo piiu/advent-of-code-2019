@@ -19,12 +19,10 @@ do {
 class DonutMaze {
     public $cleanMap = [];
     public $map = [];
-    /** @var Portal[] */
     public $portals = [];
     public $startingLocation;
     public $level = 0;
     public $stepsTaken = 0;
-    public $solutions = [];
     public $maxNestingLevel;
 
     const PASSAGE = '.';
@@ -83,7 +81,6 @@ class DonutMaze {
                         $portal = Portal::getByPassage($location, $this->portals);
                         if ($this->level === 0 && $portal->name == 'ZZ') {
                             $solution = $this->stepsTaken - 1;
-                            $this->solutions[] = $solution;
                             if (!$recursive) {
                                 return $solution;
                             }
