@@ -10,19 +10,24 @@ echo 'Part 1: '. $maze->stepsTaken . PHP_EOL;
 
 $maze = DonutMaze::createFromInput($input);
 $maze->solve(true);
-echo 'Part 2: '. $maze->stepsTaken . PHP_EOL;
+if ($maze->isSolved) {
+    echo 'Part 2: '. $maze->stepsTaken . PHP_EOL;
+}
+
 
 class DonutMaze {
     public $cleanMap = [];
     public $map = [];
+    /** @var Portal[] */
     public $portals = [];
     public $startingLocation;
     public $level = 0;
     public $stepsTaken = 0;
+    public $isSolved = false;
 
     const PASSAGE = '.';
     const WALL = '#';
-    const EXPLORED = '%';
+    const EXPLORED = '+';
 
     const PORTAL = '/^[A-Z]$/';
 
@@ -40,17 +45,17 @@ class DonutMaze {
         return $maze;
     }
 
-    public function cloneWithCleanMap(Location $startingLocation, $goDeeper) : self {
+    public function cloneWithCleanMap(Location $startingLocation, int $level) : self {
         $maze = new self();
         $maze->cleanMap = $maze->map = $this->cleanMap;
         $maze->portals = $this->portals;
         $maze->startingLocation = $startingLocation;
-        $maze->level = $this->level + ($goDeeper ? 1 : - 1);
+        $maze->level = $level;
         $maze->stepsTaken = $this->stepsTaken - 1;
         return $maze;
     }
 
-    public function solve(bool $recursive, Location $currentLocation = null, Portal $usedPortal = null) {
+    public function solve(bool $recursive, Location $currentLocation = null, Portal $usedPortal = null, array $levelStates = []) {
         $locationsToSpreadFrom = [$currentLocation ?? $this->startingLocation];
         while (!empty($locationsToSpreadFrom)) {
             $this->stepsTaken++;
@@ -69,8 +74,9 @@ class DonutMaze {
                     if (preg_match(DonutMaze::PORTAL, $potentialPortal)) {
                         $portal = Portal::getByPassage($location, $this->portals);
                         if ($this->level === 0 && $portal->name == 'ZZ') {
+                            $this->isSolved = true;
                             $this->stepsTaken--;
-                            return;
+                            return true;
                         }
                         if (!$recursive) {
                             if (!empty($portal->otherEnd)) {
@@ -87,14 +93,27 @@ class DonutMaze {
                         if ($usedPortal && $usedPortal->isOtherEnd($portal)) {
                             continue;
                         }
-                        $newLevel = $this->cloneWithCleanMap($portal->otherEnd->passage, !$portal->isOuter);
-                        $newLevel->solve(true, $portal->otherEnd->passage, $portal);
 
+                        echo 'Level: '.$this->level . PHP_EOL;
+                        Utils::drawBoard($this->map);
+
+                        $levelStates[$this->level] = $this;
+                        $level = $this->level + ($portal->isOuter ? -1 : 1);
+
+                        if (isset($levelStates[$level])) {
+                            $newLevel = $levelStates[$level];
+                        } else {
+                            $newLevel = $this->cloneWithCleanMap($portal->otherEnd->passage, $level);
+                        }
+
+                        if ($newLevel->solve(true, $portal->otherEnd->passage, $portal, $levelStates)) {
+                            return true;
+                        }
                     }
                 }
             }
         }
-        return;
+        return false;
     }
 
     public function setExplored(Location $location) {
@@ -125,7 +144,7 @@ class DonutMaze {
             return true;
         }
         $maxY = count($this->map) - 1;
-        $maxX = count($this->map[0]) - 1;
+        $maxX = count($this->map[3]) - 1;
         if ($location->x > $maxX - 3 || $location->y > $maxY - 3) {
             return true;
 
