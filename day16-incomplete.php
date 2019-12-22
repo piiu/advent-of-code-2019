@@ -12,7 +12,6 @@ $output = doPhases($input2, 100);
 $solutionString = implode('', $output);
 echo 'Part 2: '. substr($solutionString, 0, 8) . PHP_EOL;
 
-
 function doPhases(array $input, int $phaseCount) {
     $basePattern = [0, 1, 0, -1];
 
