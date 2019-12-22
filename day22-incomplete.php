@@ -9,23 +9,24 @@ $instructions = array_map(function (string $instruction) : array {
     ];
 }, explode("\n", $input));
 
-$deck = new Deck(10007);
+$deck = new CardPosition(10007, 2019);
 $deck->shuffle($instructions);
-echo 'Part 1: '. $deck->findCard(2019) . PHP_EOL;
+echo 'Part 1: '. $deck->position . PHP_EOL;
 
-$deck = new Deck(119315717514047);
-for ($count = 0; $count < 101741582076661; $count++) {
+$deck = new CardPosition(119315717514047, 2020);
+for ($i=0;$i<101741582076661;$i++) {
     $deck->shuffle($instructions);
 }
-echo 'Part 2: '. $deck->findCard(2020) . PHP_EOL;
+echo 'Part 2: '. $deck->position . PHP_EOL;
 
-class Deck {
-    private $cards = [];
+
+class CardPosition {
     private $deckSize;
+    public $position;
 
-    public function __construct(int $size) {
-        $this->deckSize = $size;
-        $this->cards = range(0, $size - 1);
+    public function __construct(float $deckSize, float $target) {
+        $this->deckSize = $deckSize;
+        $this->position = $target;
     }
 
     public function shuffle($instructions) {
@@ -43,31 +44,22 @@ class Deck {
         }
     }
 
-    private function dealIntoNewStack() {
-        $this->cards = array_reverse($this->cards);
+    private function dealWithIncrement($parameter) {
+        $this->position = ($this->position * $parameter) % $this->deckSize;
     }
 
-    private function cut(int $n) {
-        $firstSlice = array_slice($this->cards, $n);
-        $secondSlice = array_slice($this->cards, 0, $n);
-        $this->cards = array_merge($firstSlice, $secondSlice);
-    }
-
-    private function dealWithIncrement(int $n) {
-        $newDeck = [];
-        $position = 0;
-        foreach ($this->cards as $card) {
-            $newDeck[$position] = $card;
-            $position += $n;
-            if ($position > $this->deckSize) {
-                $position -= $this->deckSize;
-            }
+    private function cut($parameter) {
+        if ($parameter < 0) {
+            $parameter = $this->deckSize + $parameter;
         }
-        ksort($newDeck);
-        $this->cards = $newDeck;
+        if ($parameter > $this->position) {
+            $this->position += $this->deckSize - $parameter;
+        } else {
+            $this->position -= $parameter;
+        }
     }
 
-    public function findCard(int $card) {
-        return array_search($card, $this->cards);
+    private function dealIntoNewStack() {
+        $this->position = $this->deckSize - $this->position - 1;
     }
 }
