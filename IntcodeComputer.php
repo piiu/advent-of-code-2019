@@ -22,6 +22,8 @@ class IntcodeComputer {
     const MODE_PARAMETER = 1;
     const MODE_RELATIVE = 2;
 
+    const ASCII_NEWLINE = 10;
+
     public function __construct(array $code) {
         $this->defaultCode = array_map(function ($a) {
             return (int)$a;
@@ -31,6 +33,15 @@ class IntcodeComputer {
 
     public function addInput(int $input) : self {
         $this->inputs[] = $input;
+        return $this;
+    }
+
+    public function addAsciiInput(string $input) : self {
+        $chars = str_split($input);
+        foreach ($chars as $char) {
+            $this->addInput(ord($char));
+        }
+        $this->addInput(self::ASCII_NEWLINE);
         return $this;
     }
 
@@ -105,6 +116,14 @@ class IntcodeComputer {
     public function getFirstOutput() : int {
         $output = $this->getOutput();
         return $output[0];
+    }
+
+    public function printAsciiOutput() {
+        $output = $this->getOutput();
+        foreach ($output as $item) {
+            echo chr($item);
+        }
+        return $output;
     }
 
     public function reset() : self {

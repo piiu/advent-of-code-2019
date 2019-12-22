@@ -20,7 +20,7 @@ class VacuumRobot {
     private $computer;
     private $scaffolding;
 
-    const NEWLINE = 10;
+    const NEWLINE = IntcodeComputer::ASCII_NEWLINE;
     const SCAFFOLD = 35;
 
     public function __construct(array $code) {
@@ -44,16 +44,9 @@ class VacuumRobot {
     public function getDustCollected(array $inputs) {
         $this->computer->getOutput();
         foreach ($inputs as $inputString) {
-            $chars = str_split($inputString);
-            foreach ($chars as $char) {
-                $this->computer->addInput(ord($char));
-            }
-            $this->computer->addInput(self::NEWLINE);
-            $this->computer->getOutput();
+            $this->computer->addAsciiInput($inputString)->getOutput();
         }
-        $this->computer->addInput(ord('n'));
-        $this->computer->addInput(self::NEWLINE);
-        $output = $this->computer->getOutput();
+        $output = $this->computer->addAsciiInput('n')->getOutput();
         return array_pop($output);
     }
 
