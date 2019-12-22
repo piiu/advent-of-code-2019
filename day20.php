@@ -5,30 +5,46 @@ require_once('Utils.php');
 $input = file_get_contents(__DIR__ . '/input/day20');
 
 $maze = DonutMaze::createFromInput($input);
-echo 'Part 1: '. $maze->solve(false) . PHP_EOL;
+echo 'Part 1: '. $maze->solve() . PHP_EOL;
 
-$maxNestingLevel = 0;
+$maze = DonutMaze::createFromInput($input);
+echo 'Part 2: '. $maze->solveWithMazeRunners() . PHP_EOL;
 
-do {
-    $maze = DonutMaze::createFromInput($input);
-    $maze->maxNestingLevel = $maxNestingLevel++;
-    $maze->solve(true);
-} while (true);
+class MazeRunner {
+    public $level = 0;
+    public $location;
+    public $pathTaken = [];
+    public $stepsTaken = -1;
+    public $emergedFrom = null;
 
+    public function __construct(Location $startingLocation) {
+        $this->setLocation($startingLocation);
+    }
+
+    public function setLocation(Location $location) {
+        $this->location = $location;
+        $this->pathTaken[$location->x . ':' . $location->y] = true;
+        $this->stepsTaken++;
+    }
+
+    public function hasExplored(Location $location): bool {
+        return isset($this->pathTaken[$location->x . ':' . $location->y]);
+    }
+
+    public function setLevel(int $level) {
+        $this->level = $level;
+        $this->pathTaken = [];
+    }
+}
 
 class DonutMaze {
     public $cleanMap = [];
     public $map = [];
     public $portals = [];
     public $startingLocation;
-    public $level = 0;
-    public $stepsTaken = 0;
-    public $maxNestingLevel;
 
     const PASSAGE = '.';
-    const WALL = '#';
     const EXPLORED = '+';
-
     const PORTAL = '/^[A-Z]$/';
 
     public static function createFromInput(string $input) : self {
@@ -45,83 +61,86 @@ class DonutMaze {
         return $maze;
     }
 
-    public function cloneWithCleanMap(Location $startingLocation, int $level) : self {
-        $maze = new self();
-        $maze->cleanMap = $maze->map = $this->cleanMap;
-        $maze->portals = $this->portals;
-        $maze->startingLocation = $startingLocation;
-        $maze->level = $level;
-        $maze->stepsTaken = $this->stepsTaken;
-        $maze->maxNestingLevel = $this->maxNestingLevel;
-        return $maze;
-    }
-
-    public function solve(bool $recursive, Location $currentLocation = null, Portal $usedPortal = null, array $levelStates = [], $nestingLevel = 0) {
-        $locationsToSpreadFrom = [$currentLocation ?? $this->startingLocation];
-
-        if ($nestingLevel > $this->maxNestingLevel) {
-            return false;
-        }
-
+    public function solve() {
+        $locationsToSpreadFrom = [$this->startingLocation];
+        $stepsTaken = 0;
         while (!empty($locationsToSpreadFrom)) {
-            $this->stepsTaken++;
             foreach ($locationsToSpreadFrom as $index => $location) {
                 unset($locationsToSpreadFrom[$index]);
                 $this->setExplored($location);
                 foreach (Location::DIRECTIONS as $direction) {
                     $newLocation = new Location($location->x, $location->y, $direction);
-
                     if ($newLocation->getValueFromMap($this->map) === self::PASSAGE) {
                         $locationsToSpreadFrom[] = $newLocation;
                         continue;
                     }
-
                     $potentialPortal = $newLocation->getValueFromMap($this->map);
                     if (preg_match(DonutMaze::PORTAL, $potentialPortal)) {
                         $portal = Portal::getByPassage($location, $this->portals);
-                        if ($this->level === 0 && $portal->name == 'ZZ') {
-                            $solution = $this->stepsTaken - 1;
-                            if (!$recursive) {
-                                return $solution;
-                            }
-                            echo 'Part 2 possible solution: ' . $solution . PHP_EOL;
+                        if ($portal->name == 'ZZ') {
+                            return $stepsTaken;
                         }
-                        if (!$recursive) {
-                            if (!empty($portal->otherEnd)) {
-                                $locationsToSpreadFrom[] = $portal->otherEnd->passage;
-                            }
-                            continue;
+                        if (!empty($portal->otherEnd)) {
+                            $locationsToSpreadFrom[] = $portal->otherEnd->passage;
                         }
-                        if ($this->level === 0 && $portal->isOuter) {
-                            continue;
-                        }
-                        if ($this->level !== 0 && in_array($portal->name, ['AA', 'ZZ'])) {
-                            continue;
-                        }
-                        if ($usedPortal && $usedPortal->isOtherEnd($portal)) {
-                            continue;
-                        }
-
-                        $levelStates[$this->level] = $this;
-                        $level = $this->level + ($portal->isOuter ? -1 : 1);
-
-                        if (isset($levelStates[$level])) {
-                            $newLevel = $levelStates[$level];
-                            $newLevel->stepsTaken = $this->stepsTaken;
-                        } else {
-                            $newLevel = $this->cloneWithCleanMap($portal->otherEnd->passage, $level);
-                        }
-
-                        $newLevel->solve(true, $portal->otherEnd->passage, $portal, $levelStates, $nestingLevel +1);
                     }
                 }
             }
+            $stepsTaken++;
         }
-        return false;
     }
 
-    public function setExplored(Location $location) {
-        $this->map[$location->y][$location->x] = self::EXPLORED;
+    public function solveWithMazeRunners() {
+        /** @var MazeRunner[] $runners */
+        $runners = [new MazeRunner($this->startingLocation)];
+        $step = 1;
+        do {
+            // echo ($step++) . "\t" . count($runners) . PHP_EOL;
+            $currentRunners = $runners;
+            $runners = [];
+            foreach ($currentRunners as $originalRunner) {
+                $clonedRunner = clone $originalRunner;
+                $hasMoved = false;
+                foreach (Location::DIRECTIONS as $direction) {
+                    $newLocation = new Location($clonedRunner->location->x, $clonedRunner->location->y, $direction);
+                    if ($clonedRunner->hasExplored($newLocation)) {
+                        continue;
+                    }
+                    if ($newLocation->getValueFromMap($this->map) === self::PASSAGE) {
+                        $runnerToMove = $hasMoved ? clone $clonedRunner : $originalRunner;
+                        $runners[] = $runnerToMove;
+                        $runnerToMove->setLocation($newLocation);
+                        $hasMoved = true;
+                        continue;
+                    }
+                    $potentialPortal = $newLocation->getValueFromMap($this->map);
+                    if (preg_match(DonutMaze::PORTAL, $potentialPortal)) {
+                        $portal = Portal::getByPassage($clonedRunner->location, $this->portals);
+                        if ($clonedRunner->level === 0 && $portal->name == 'ZZ') {
+                            return $clonedRunner->stepsTaken;
+                        }
+                        if ($clonedRunner->level === 0 && $portal->isOuter) {
+                            continue;
+                        }
+                        if ($clonedRunner->level !== 0 && in_array($portal->name, ['AA', 'ZZ'])) {
+                            continue;
+                        }
+                        if ($clonedRunner->emergedFrom === $portal) {
+                            continue;
+                        }
+                        $level = $clonedRunner->level + ($portal->isOuter ? -1 : 1);
+                        $newLocation = $portal->otherEnd->passage;
+                        $runnerToMove = $hasMoved ? clone $clonedRunner : $originalRunner;
+                        $runners[] = $runnerToMove;
+                        $runnerToMove->setLevel($level);
+                        $runnerToMove->emergedFrom = $portal->otherEnd;
+                        $runnerToMove->setLocation($newLocation);
+                        $hasMoved = true;
+                        continue;
+                    }
+                }
+            }
+        } while (count($runners));
     }
 
     private function listPortals() {
@@ -151,9 +170,12 @@ class DonutMaze {
         $maxX = count($this->map[3]) - 1;
         if ($location->x > $maxX - 3 || $location->y > $maxY - 3) {
             return true;
-
         }
         return false;
+    }
+
+    private function setExplored(Location $location) {
+        $this->map[$location->y][$location->x] = self::EXPLORED;
     }
 }
 
@@ -162,7 +184,6 @@ class Portal {
     public $passage;
     public $otherEnd;
     public $isOuter;
-
     public function __construct(string $name, Location $passage, bool $isOuter) {
         $this->passage = $passage;
         $this->name = $name;
@@ -178,7 +199,6 @@ class Portal {
             }
         }
     }
-
     public function isOtherEnd(self $portal) : bool {
         return ($this->name === $portal->name || $this->name === strrev($portal->name))
             && !$this->passage->isEqual($portal->passage);
