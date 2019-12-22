@@ -10,9 +10,7 @@ $part1 = $droid->runInstructions('WALK', [
     'AND D T', // !C AND D
     'NOT T T', // !(!C AND D)
     'AND A T', // !(!C AND D) AND A
-    'NOT T T', // (!C AND D) OR !A
-    'NOT T T',
-    'NOT T J',
+    'NOT T J', // (!C AND D) OR !A
 ]);
 echo 'Part 1: '. $part1 . PHP_EOL;
 
