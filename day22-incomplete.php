@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__.'/vendor/autoload.php';
-require_once __DIR__.'config.php';
+require_once 'vendor/autoload.php';
+require_once 'config.php';
 
 $input = file_get_contents(__DIR__ . '/input/day22');
 $instructions = array_map(function (string $instruction) : array {
@@ -14,7 +14,7 @@ $instructions = array_map(function (string $instruction) : array {
 $deck = new CardPosition(10007, 2019);
 
 //$deck->getSimplifiedExpression($instructions); // (5322 - 14730401476308983246289100067650956319185174528000000000000 x) mod 10007
-$resultWithFormula = bcmod(bcsub(5322, bcmul(2019, 14730401476308983246289100067650956319185174528000000000000)), 10007);
+$resultWithFormula = gmp_mod(gmp_sub('5322', gmp_mul('2019', '14730401476308983246289100067650956319185174528000000000000')), '10007');
 echo 'Part 1: ' . $resultWithFormula . PHP_EOL;
 
 $deck->shuffle($instructions);
@@ -25,7 +25,7 @@ $deck = new CardPosition(119315717514047, 2020);
 
 $input = $deck->position;
 for ($i = 0; $i < 101741582076661; $i++) {
-    $output = bcmod(bcsub(70339139553642, bcmul($input, 14730401476308983246289100067650956319185174528000000000000)), 119315717514047);
+    $output = gmp_mod(gmp_sub('70339139553642', gmp_mul((string)$input, '14730401476308983246289100067650956319185174528000000000000')), '119315717514047');
     $input = $output;
 }
 echo 'Part 2: '. $output . PHP_EOL;
