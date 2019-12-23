@@ -1,0 +1,6 @@
+{
+    "name": "piiu/advent-of-code-2019",
+    "require": {
+        "francescomalatesta/wolframalphaphp": "dev-master"
+    }
+}

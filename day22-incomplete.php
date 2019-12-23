@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__.'/vendor/autoload.php';
+
+const WOLFRAM_ALPHA_APP_ID = '';
 
 $input = file_get_contents(__DIR__ . '/input/day22');
 $instructions = array_map(function (string $instruction) : array {
@@ -13,16 +16,31 @@ $deck = new CardPosition(10007, 2019);
 $deck->shuffle($instructions);
 echo 'Part 1: '. $deck->position . PHP_EOL;
 
-$deck = new CardPosition(119315717514047, 2020);
-for ($i=0;$i<101741582076661;$i++) {
-    $deck->shuffle($instructions);
-}
-echo 'Part 2: '. $deck->position . PHP_EOL;
+/*
+ * Run this once to get the fully simplified expression with WolframAlpha API.
+ * Then format it as bcmath and run the required number of times.
+ */
 
+//$deck = new CardPosition(119315717514047, 2020);
+//$deck->getSimplifiedExpression($instructions); // (70339139553642 - 14730401476308983246289100067650956319185174528000000000000 x) mod 119315717514047
+
+$input = 2020;
+for ($i = 0; $i < 101741582076661; $i++) {
+    if ($i % 100000 == 0) {
+        echo $i . PHP_EOL;
+    }
+    $output = bcmod(bcsub(70339139553642, bcmul($input, 14730401476308983246289100067650956319185174528000000000000)), 119315717514047);
+    $input = $output;
+}
+echo 'Part 2: '. $output . PHP_EOL;
 
 class CardPosition {
     private $deckSize;
     public $position;
+    
+    const INCREMENT_SHUFFLE = 'deal with increment';
+    const CUT = 'cut';
+    const REVERSE = 'deal into new';
 
     public function __construct(float $deckSize, float $target) {
         $this->deckSize = $deckSize;
@@ -32,13 +50,13 @@ class CardPosition {
     public function shuffle($instructions) {
         foreach ($instructions as $instruction) {
             switch ($instruction['operation']) {
-                case 'deal with increment':
+                case self::INCREMENT_SHUFFLE:
                     $this->dealWithIncrement($instruction['parameter']);
                     break;
-                case 'cut':
+                case self::CUT:
                     $this->cut($instruction['parameter']);
                     break;
-                case 'deal into new':
+                case self::REVERSE:
                     $this->dealIntoNewStack();
             }
         }
@@ -52,14 +70,57 @@ class CardPosition {
         if ($parameter < 0) {
             $parameter = $this->deckSize + $parameter;
         }
-        if ($parameter > $this->position) {
-            $this->position += $this->deckSize - $parameter;
-        } else {
-            $this->position -= $parameter;
-        }
+        $this->position = ($this->position - $parameter) % $this->deckSize;
     }
 
     private function dealIntoNewStack() {
         $this->position = $this->deckSize - $this->position - 1;
+    }
+
+    public function getSimplifiedExpression(array $instructions) {
+        $instructions = array_reverse($instructions);
+        $deckSize = number_format($this->deckSize, 0, '', '');
+
+        $waEngine = new WolframAlpha\Engine(WOLFRAM_ALPHA_APP_ID);
+
+        foreach ($instructions as $index => $instruction) {
+            $operation = $instruction['operation'];
+            $parameter = $instruction['parameter'];
+            $string = '';
+
+            if ($operation === self::INCREMENT_SHUFFLE) {
+                $string = "(x * $parameter) mod $deckSize";
+            }
+
+            if ($operation === self::CUT) {
+                if ($parameter < 0) {
+                    $parameter = number_format($this->deckSize + $parameter, 0, '', '');
+                }
+                $string =  "(x - $parameter) mod $deckSize";
+            }
+
+            if ($operation === self::REVERSE) {
+                $string = "$deckSize-x-1";
+            }
+
+            if (empty($expression)) {
+                $expression = $string;
+            } else {
+                $expression = str_replace('x', '('. $string . ')', $expression);
+            }
+
+            if ($index == 0) {
+                continue;
+            }
+
+            echo 'Expression '. $index .': '. $expression . PHP_EOL;
+            $result = $waEngine->process($expression, [], ['plaintext']);
+            $alternateForms = $result->pods->find('AlternateForm')->subpods;
+            $expression = $alternateForms[0]->plaintext;
+            echo 'Simplified: ' . $expression . PHP_EOL;
+        }
+
+        echo 'Final expression:' . PHP_EOL . $expression. PHP_EOL;
+        return $expression;
     }
 }
