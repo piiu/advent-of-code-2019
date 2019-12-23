@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__.'/vendor/autoload.php';
-
-const WOLFRAM_ALPHA_APP_ID = '';
+require_once __DIR__.'config.php';
 
 $input = file_get_contents(__DIR__ . '/input/day22');
 $instructions = array_map(function (string $instruction) : array {
@@ -13,22 +12,19 @@ $instructions = array_map(function (string $instruction) : array {
 }, explode("\n", $input));
 
 $deck = new CardPosition(10007, 2019);
+
+//$deck->getSimplifiedExpression($instructions); // (5322 - 14730401476308983246289100067650956319185174528000000000000 x) mod 10007
+$resultWithFormula = bcmod(bcsub(5322, bcmul(2019, 14730401476308983246289100067650956319185174528000000000000)), 10007);
+echo 'Part 1: ' . $resultWithFormula . PHP_EOL;
+
 $deck->shuffle($instructions);
 echo 'Part 1: '. $deck->position . PHP_EOL;
 
-/*
- * Run this once to get the fully simplified expression with WolframAlpha API.
- * Then format it as bcmath and run the required number of times.
- */
-
-//$deck = new CardPosition(119315717514047, 2020);
+$deck = new CardPosition(119315717514047, 2020);
 //$deck->getSimplifiedExpression($instructions); // (70339139553642 - 14730401476308983246289100067650956319185174528000000000000 x) mod 119315717514047
 
-$input = 2020;
+$input = $deck->position;
 for ($i = 0; $i < 101741582076661; $i++) {
-    if ($i % 100000 == 0) {
-        echo $i . PHP_EOL;
-    }
     $output = bcmod(bcsub(70339139553642, bcmul($input, 14730401476308983246289100067650956319185174528000000000000)), 119315717514047);
     $input = $output;
 }
