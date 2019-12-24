@@ -21,7 +21,6 @@ echo 'Part 1 (formula): ' . $resultWithFormula . PHP_EOL;
 $deck->shuffle($instructions);
 echo 'Part 1 (shuffle): '. $deck->position . PHP_EOL;
 
-
 $deck = new CardPosition(119315717514047, 2020);
 //$deck->getSimplifiedExpression($instructions);
 // // (70339139553642 - 14730401476308983246289100067650956319185174528000000000000 x) mod 119315717514047 = (70339139553642 - 9092859308131 x) mod 119315717514047
@@ -57,6 +56,9 @@ class CardPosition {
                     break;
                 case self::REVERSE:
                     $this->dealIntoNewStack();
+            }
+            while ($this->position < 0) {
+                $this->position += $this->deckSize;
             }
         }
     }
