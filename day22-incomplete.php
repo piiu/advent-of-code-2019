@@ -13,8 +13,9 @@ $instructions = array_map(function (string $instruction) : array {
 
 $deck = new CardPosition(10007, 2019);
 
-//$deck->getSimplifiedExpression($instructions); // (5322 - 14730401476308983246289100067650956319185174528000000000000 x) mod 10007
-$resultWithFormula = gmp_mod(gmp_sub('5322', gmp_mul('2019', '14730401476308983246289100067650956319185174528000000000000')), '10007');
+//$deck->getSimplifiedExpression($instructions);
+// // (5322 - 14730401476308983246289100067650956319185174528000000000000 x) mod 10007 = (5322 - 388x) mod 10007
+$resultWithFormula = gmp_mod(gmp_sub('5322', gmp_mul('2019', '388')), '10007');
 echo 'Part 1 (formula): ' . $resultWithFormula . PHP_EOL;
 
 $deck->shuffle($instructions);
@@ -23,18 +24,7 @@ echo 'Part 1 (shuffle): '. $deck->position . PHP_EOL;
 
 $deck = new CardPosition(119315717514047, 2020);
 //$deck->getSimplifiedExpression($instructions);
-
-/*
- * (a+b) mod n = ((a mod n) + (b mod n)) mod n
- * ab mod n = ((a mod n) (b mod n)) mod n
- * (ax+b) mod n = (ax mod n + b mod n) mod n = (((a mod n * x mod n) mod n)+ b mod n) mod n
- * *
- * (70339139553642 - 14730401476308983246289100067650956319185174528000000000000 x) mod 119315717514047 =
- * = (((70339139553642 mod 119315717514047) - (((14730401476308983246289100067650956319185174528000000000000 mod 119315717514047) * (x mod 119315717514047)) mod 119315717514047)) mod 119315717514047) mod 119315717514047 =
- * = ((70339139553642 - ((9092859308131 * (x mod 119315717514047)) mod 119315717514047)) mod 119315717514047) mod 119315717514047 =
- * = (70339139553642 - 9092859308131 x) mod 119315717514047
-
- */
+// // (70339139553642 - 14730401476308983246289100067650956319185174528000000000000 x) mod 119315717514047 = (70339139553642 - 9092859308131 x) mod 119315717514047
 
 $input = $deck->position;
 for ($i = 0; $i < 101741582076661; $i++) {
