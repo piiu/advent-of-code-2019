@@ -28,28 +28,12 @@ for ($i = 0; $i<10; $i++) {
     $deck->shuffle($instructions);
 }
 
-$a = -388 + 10007;
-$b = 5322;
-$m = 10007;
-$n = 10;
-$x = 2019;
-
-$a1 = $a - 1;
-$ma = $a1 * $m;
-$an = gmp_powm($a, $n, $m);
-$y = gmp_powm($a, $n, $ma - 1) / $a1 * $b;
-$z = gmp_powm($a, $n, $m) * $x;
-$x = ($y + $z) % $m;
-
-echo $input .'='. $deck->position . '=' . $x . PHP_EOL;
-
 // $deck = new CardPosition(119315717514047, 2020);
 //$deck->getSimplifiedExpression($instructions);
-// // (70339139553642 - 14730401476308983246289100067650956319185174528000000000000 x) mod 119315717514047 = (70339139553642 - 9092859308131 x) mod 119315717514047
 
 /*
- * Now we just implement
- * https://www.nayuki.io/page/fast-skipping-in-a-linear-congruential-generator
+ * Final expression : (70339139553642 - 9092859308131 x) mod 119315717514047
+ * Now we just implement https://www.nayuki.io/page/fast-skipping-in-a-linear-congruential-generator
  */
 
 $a = -9092859308131 + 119315717514047;
