@@ -21,16 +21,51 @@ echo 'Part 1 (formula): ' . $resultWithFormula . PHP_EOL;
 $deck->shuffle($instructions);
 echo 'Part 1 (shuffle): '. $deck->position . PHP_EOL;
 
-$deck = new CardPosition(119315717514047, 2020);
+$input = 2019;
+$deck = new CardPosition(10007, 2019);
+for ($i = 0; $i<10; $i++) {
+    $input = gmp_mod(gmp_sub('5322', gmp_mul((string)$input, '388')), '10007');
+    $deck->shuffle($instructions);
+}
+
+$a = -388 + 10007;
+$b = 5322;
+$m = 10007;
+$n = 10;
+$x = 2019;
+
+$a1 = $a - 1;
+$ma = $a1 * $m;
+$an = gmp_powm($a, $n, $m);
+$y = gmp_powm($a, $n, $ma - 1) / $a1 * $b;
+$z = gmp_powm($a, $n, $m) * $x;
+$x = ($y + $z) % $m;
+
+echo $input .'='. $deck->position . '=' . $x . PHP_EOL;
+
+// $deck = new CardPosition(119315717514047, 2020);
 //$deck->getSimplifiedExpression($instructions);
 // // (70339139553642 - 14730401476308983246289100067650956319185174528000000000000 x) mod 119315717514047 = (70339139553642 - 9092859308131 x) mod 119315717514047
 
-$input = $deck->position;
-for ($i = 0; $i < 101741582076661; $i++) {
-    $output = gmp_mod(gmp_sub('70339139553642', gmp_mul((string)$input, '9092859308131')), '119315717514047');
-    $input = $output;
-}
-echo 'Part 2: '. $output . PHP_EOL;
+/*
+ * Now we just implement
+ * https://www.nayuki.io/page/fast-skipping-in-a-linear-congruential-generator
+ */
+
+$a = -9092859308131 + 119315717514047;
+$b = 70339139553642;
+$m = 119315717514047;
+$n = 101741582076661;
+$x = 2020;
+
+$a1 = gmp_sub($a, 1);
+$ma = gmp_mul($a1, $m);
+$an = gmp_powm($a, $n, $m);
+$y = gmp_mul(gmp_div(gmp_powm($a, $n, gmp_sub($ma, 1)), $a1), $b);
+$z = gmp_mul(gmp_powm($a, $n, $m), $x);
+$x = gmp_mod(gmp_add($y, $z), $m);
+
+echo 'Part 2: '. $x . PHP_EOL;
 
 class CardPosition {
     private $deckSize;
