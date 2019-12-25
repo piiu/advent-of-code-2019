@@ -4,7 +4,6 @@
 class Location {
     public $x;
     public $y;
-    public $stepsTo;
 
     const NORTH = 1;
     const SOUTH = 2;
@@ -13,10 +12,9 @@ class Location {
 
     const DIRECTIONS = [self::NORTH, self::EAST, self::SOUTH, self::WEST];
 
-    public function __construct(int $x, int $y, int $direction = null, $stepsTo = null) {
+    public function __construct(int $x, int $y, int $direction = null) {
         $this->x = $x;
         $this->y = $y;
-        $this->stepsTo = $stepsTo;
 
         if ($direction) {
             $this->addDirection($direction);
@@ -45,5 +43,16 @@ class Location {
 
     public function getValueFromMap(array $map) {
         return $map[$this->y][$this->x] ?? null;
+    }
+}
+
+class KeyLocation extends Location {
+    public $stepsTo;
+    public $key;
+
+    public function __construct(int $x, int $y, int $direction = null, int $stepsTo = null, string $key = null) {
+        parent::__construct($x, $y, $direction);
+        $this->stepsTo = $stepsTo;
+        $this->key = $key;
     }
 }

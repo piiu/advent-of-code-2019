@@ -1,132 +1,139 @@
 <?php
 require_once('Location.php');
 
+const PASSAGE = '.';
+const WALL = '#';
+const ENTRANCE = '@';
+const EXPLORED = 'X';
+
+const KEY = '/^[a-z]$/';
+const DOOR = '/^[A-Z]$/';
+
 $input = file_get_contents(__DIR__ . '/input/day18');
-$vault = new Vault($input);
+$rows = explode("\n", $input);
 
-$vault->solve();
-echo 'Part 1: '. $vault->minPath . PHP_EOL;
-
-
-class Vault {
-    private $map = [];
-    private $numberOfKeys = 0;
-    private $pathsTested = 0;
-    public $currentLocation;
-    public $minPath = null;
-    public $optimalPaths = [];
-
-    const PASSAGE = '.';
-    const WALL = '#';
-    const MY_LOCATION = '@';
-    const EXPLORED = 'X';
-
-    const KEY = '/^[a-z]$/';
-    const DOOR = '/^[A-Z]$/';
-
-    public function __construct($input) {
-        $rows = explode("\n", $input);
-        foreach ($rows as $y => $row) {
-            $chars = str_split($row);
-            foreach ($chars as $x => $char) {
-                if ($char === self::MY_LOCATION) {
-                    $this->currentLocation = new Location($x, $y);
-                    $char = self::PASSAGE;
-                }
-                if (preg_match(self::KEY, $char)) {
-                    $this->numberOfKeys++;
-                }
-                $this->map[$y][$x] = $char;
-            }
+$baseMap = [];
+$currentLocation = null;
+$numberOfKeys = 0;
+foreach ($rows as $y => $row) {
+    $chars = str_split($row);
+    foreach ($chars as $x => $char) {
+        if ($char === ENTRANCE) {
+            $currentLocation = new Location($x, $y);
+            $char = PASSAGE;
         }
+        if (preg_match(KEY, $char)) {
+            $numberOfKeys++;
+        }
+        $baseMap[$y][$x] = $char;
     }
+}
 
-    public function solve(Location $Location = null, array $mapState = null, $stepsTaken = 0, $currentPath = []) {
-        $Location = $Location ?? $this->currentLocation;
-        $mapState = $mapState ?? $this->map;
-
-        if ($this->minPath && $stepsTaken >= $this->minPath) {
-            $this->pathsTested++;
-            $this->outputProgress();
-            return;
-        }
-
-        if (count($currentPath) === $this->numberOfKeys) {
-            $this->pathsTested++;
-            $this->minPath = $stepsTaken;
-            $this->outputProgress();
-            return;
-        }
-
-        $keyLocations = $this->getClosestKeys($mapState, $Location);
+/** @var Runner[] $runners */
+$runners = [
+    new Runner($baseMap, 0, null, [], $currentLocation)
+];
+for ($tick = 1; $tick <= $numberOfKeys; $tick++) {
+    $newRunners = [];
+    foreach ($runners as $runner) {
+        $keyLocations = getClosestKeys($runner->map, $runner->currentLocation);
         foreach ($keyLocations as $keyLocation) {
-            $newMapState = $mapState;
-            $key = $newMapState[$keyLocation->y][$keyLocation->x];
-            $this->openDoor($newMapState, $keyLocation, $key);
-
-            $stepsTakenToKey = $stepsTaken + $keyLocation->stepsTo;
-            $pathToKey = array_merge($currentPath, [$key]);
-
-            $currentPathSting = implode('', $pathToKey);
-            $bestSoFar = $this->optimalPaths[$currentPathSting] ?? null;
-            if (!$bestSoFar || $bestSoFar < $stepsTakenToKey) {
-                $this->optimalPaths[$currentPathSting] = $stepsTakenToKey;
-            } else {
-                continue;
-            }
-
-            $this->solve($keyLocation, $newMapState, $stepsTakenToKey, $pathToKey);
+            $newRunners[] = new Runner($runner->map, $runner->stepsTaken, $keyLocation, $runner->keys);
         }
     }
+    $runners = killBadRunners($newRunners);
+    echo 'Tick: ' . $tick . ' Runners: ' . count($runners) . PHP_EOL;
+}
 
-    private function outputProgress() {
-        echo 'tested: '. $this->pathsTested . ', best: ' .  $this->minPath . PHP_EOL;
-    }
+$minPath = null;
+foreach ($runners as $runner) {
+    $minPath = !$minPath || $runner->stepsTaken < $minPath ? $runner->stepsTaken : $minPath;
+}
+echo 'Part 1: '. $minPath . PHP_EOL;
 
-    private function getClosestKeys(array $mapState, Location $Location) {
-        $keyLocations = [];
-        $LocationsToSpreadFrom = [$Location];
-        $stepsTaken = 0;
-        while (!empty($LocationsToSpreadFrom)) {
-            $stepsTaken++;
 
-            foreach ($LocationsToSpreadFrom as $index => $Location) {
-                unset($LocationsToSpreadFrom[$index]);
-                foreach (Location::DIRECTIONS as $direction) {
-                    $newLocation = new Location($Location->x, $Location->y, $direction);
-                    if ($this->isKey($mapState, $newLocation)) {
-                        $keyLocations[] = new Location($newLocation->x, $newLocation->y, null, $stepsTaken);
-                    }
-                    if (!$this->isPassage($mapState, $newLocation)) {
-                        continue;
-                    }
-                    $this->markExplored($mapState, $newLocation);
-                    $LocationsToSpreadFrom[] = $newLocation;
+function getClosestKeys(array $mapState, Location $location) {
+    $keyLocations = [];
+    $locationsToSpreadFrom = [$location];
+    $stepsTaken = 0;
+    while (!empty($locationsToSpreadFrom)) {
+        $stepsTaken++;
+        foreach ($locationsToSpreadFrom as $index => $location) {
+            unset($locationsToSpreadFrom[$index]);
+            foreach (Location::DIRECTIONS as $direction) {
+                $newLocation = new Location($location->x, $location->y, $direction);
+                $locationValue = $newLocation->getValueFromMap($mapState);
+                if (preg_match(KEY, $locationValue)) {
+                    $keyLocations[] = new KeyLocation($newLocation->x, $newLocation->y, null, $stepsTaken, $locationValue);
                 }
+                if ($mapState[$newLocation->y][$newLocation->x] !== PASSAGE) {
+                    continue;
+                }
+                $mapState[$newLocation->y][$newLocation->x] = EXPLORED;
+                $locationsToSpreadFrom[] = $newLocation;
             }
         }
-        return $keyLocations;
+    }
+    return $keyLocations;
+}
+
+function killBadRunners(array $runners) {
+    $bestPaths = [];
+    /** @var Runner $runner */
+    foreach ($runners as $index => $runner) {
+        $keyString = $runner->getKeyString();
+        $bestSoFar = $bestPaths[$keyString] ?? null;
+        if (!$bestSoFar || $runner->stepsTaken < $bestPaths[$keyString]) {
+            $bestPaths[$keyString] = $runner->stepsTaken;
+        }
+        if ($bestSoFar && $runner->stepsTaken === $bestSoFar) {
+            unset($runners[$index]);
+        }
     }
 
-    private function markExplored(array &$mapState, Location $Location) {
-        $mapState[$Location->y][$Location->x] = self::EXPLORED;
+    foreach ($runners as $index => $runner) {
+        if ($runner->stepsTaken > $bestPaths[$runner->getKeyString()]) {
+            unset ($runners[$index]);
+        }
+    }
+    return $runners;
+}
+
+class Runner {
+    public $map;
+    public $stepsTaken;
+    public $currentLocation;
+    public $keys;
+
+    public function __construct(array $map, int $stepsTaken, KeyLocation $keyLocation = null, array $existingKeys = [], Location $currentLocation = null) {
+        $this->map = $map;
+        $this->stepsTaken = $stepsTaken;
+        $this->keys = $existingKeys;
+        if ($keyLocation) {
+            $this->stepsTaken += $keyLocation->stepsTo;
+            $this->openDoor($keyLocation);
+            $this->keys[] = $keyLocation->key;
+        }
+        if ($currentLocation) {
+            $this->currentLocation = $currentLocation;
+        } else {
+            $this->currentLocation = new Location($keyLocation->x, $keyLocation->y);
+        }
     }
 
-    private function isPassage(array $mapState, Location $Location) {
-        return $mapState[$Location->y][$Location->x] === self::PASSAGE;
+    public function getKeyString() : string {
+        $keys = $this->keys;
+        sort($keys);
+        return $this->currentLocation->x . '-' . $this->currentLocation->y . '-' . implode('', $keys);
     }
 
-    private function isKey(array $mapState, Location $location) {
-        return preg_match(self::KEY, $mapState[$location->y][$location->x]);
-    }
-
-    private function openDoor(array &$mapState, Location $keyLocation, string $key) {
-        $mapState[$keyLocation->y][$keyLocation->x] = self::PASSAGE;
-        $door = strtoupper($key);
+    private function openDoor(KeyLocation $key) {
+        $this->map[$key->y][$key->x] = PASSAGE;
+        $door = strtoupper($key->key);
         foreach ($this->map as $y => $row) {
             foreach ($row as $x => $char) {
                 if ($char === $door) {
-                    $mapState[$y][$x] = self::PASSAGE;
+                    $this->map[$y][$x] = PASSAGE;
                     return;
                 }
             }
