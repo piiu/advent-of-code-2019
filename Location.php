@@ -45,14 +45,3 @@ class Location {
         return $map[$this->y][$this->x] ?? null;
     }
 }
-
-class KeyLocation extends Location {
-    public $stepsTo;
-    public $key;
-
-    public function __construct(int $x, int $y, int $direction = null, int $stepsTo = null, string $key = null) {
-        parent::__construct($x, $y, $direction);
-        $this->stepsTo = $stepsTo;
-        $this->key = $key;
-    }
-}
